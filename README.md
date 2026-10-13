@@ -251,7 +251,7 @@ P1 的双设备测试将要求：同一账号在 A 创建 → B 同步读取 →
 
 HashRouter 的 `/#/journal` 等业务路由不会要求服务器把 `/journal` 重写到首页。首次访问应在线完成缓存；安装后的应用仍依赖该浏览器来源的数据。
 
-本项目已登记私有 Sites 项目，预计网址为 `https://charisma-lab-zzx.freshhare64.chatgpt.site`。实际发布以本次交付的工具结果为准。其他 HTTPS 静态托管也可使用生产产物。Sites 的访问登录只控制网站访问，不会启用本应用的 Supabase 云同步；手机与电脑仍各自拥有本地数据，需要通过 JSON 备份迁移。
+本项目已通过 Sites 私有部署，工具返回 `succeeded`：[打开 Charisma Lab](https://charisma-lab-zzx.freshhare64.chatgpt.site)。网站保持仅本人可访问；发布状态已确认，线上设备的离线使用仍需各自完成首次缓存。其他 HTTPS 静态托管也可使用生产产物。Sites 的访问登录只控制网站访问，不会启用本应用的 Supabase 云同步；手机与电脑仍各自拥有本地数据，需要通过 JSON 备份迁移。
 
 从本地地址迁移到 HTTPS 地址时，先导出备份，在新地址导入。不要预期正式站点会自动读取电脑 `127.0.0.1` 中的私人记录。
 

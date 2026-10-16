@@ -54,12 +54,19 @@ PWA Service Worker → 缓存 HTML / JS / CSS / 图标 / 随构建打包的课�
 charisma-lab/
 ├─ src/
 │  ├─ app/                 应用入口、路由和布局
-│  ├─ components/          可复用界面
-│  ├─ pages/               页面
-│  ├─ domain/              业务实体、Zod 校验
+│  ├─ pages/               页面组合；Settings 暂保留原实现
+│  ├─ features/            learning、training、journal、assessment、growth、profile
+│  ├─ shared/              跨功能通用 UI 与保存反馈
+│  ├─ services/            跨功能保存生命周期协调器（不是同步队列）
+│  ├─ types/               内容模型与已有领域 payload 类型入口
+│  ├─ components/          原有云账户组件、通用 UI 兼容导出
+│  ├─ domain/              原有持久化契约、Zod 校验（本轮未变）
 │  ├─ data/                Dexie、Repository、备份与事务
 │  ├─ content/             结构化模块、课程、训练、情景、自评题
+│  ├─ cloud/               原有认证与远端适配草稿（本轮未变）
+│  ├─ sync/                原有同步引擎草稿（本轮未变）
 │  ├─ hooks/               响应式数据与浏览器状态
+│  ├─ utils/               通用日期与文件工具
 │  ├─ styles/              主题与响应式样式
 │  └─ tests/               单元与组件测试
 ├─ public/icons/           PWA 图标
@@ -71,7 +78,7 @@ charisma-lab/
 └─ DEVELOPMENT.md          当前完成范围与验证记录
 ```
 
-以实际源码目录为准；P1 未交付时不提供假迁移文件或假同步接口。
+本轮目录变更与验收见 [Sprint 1 记录](docs/sprints/v0.1.1-sprint-1.md)。旧路径的兼容导出指向同一份实现，不是复制一套服务。项目仍包含此前未完成验收的 P1 草稿；文件存在不表示云同步已经交付。
 
 ## 4. Windows 11 环境要求
 

@@ -1,0 +1,1 @@
+export { TrainingWorkspace } from './TrainingWorkspace';

@@ -3,12 +3,14 @@ import {
   Database,
   Download,
   HardDrive,
-  LockKeyhole,
   RefreshCw,
   ShieldCheck,
   Upload,
 } from 'lucide-react';
-import { repository } from '../data/repository';
+import { useRepository } from '../hooks/useRepository';
+import { useCloud } from '../cloud/context';
+import { CloudAccountPanel } from '../components/CloudAccountPanel';
+import { ConflictPanel } from '../components/ConflictPanel';
 import { useRecords } from '../hooks/useRecords';
 import { useFeedback } from '../app/context';
 import { Card, Dialog, PageHeading, SectionTitle, Tag } from '../components/ui';
@@ -17,6 +19,8 @@ import type { Backup, SafetyBackup } from '../domain/types';
 import type { TrainingRecord } from '../app/types';
 import { flushAllSaves } from '../app/saveCoordinator';
 export default function SettingsPage() {
+  const repository = useRepository();
+  const cloud = useCloud();
   const records = useRecords();
   const settings = useRecords('appSettings');
   const { perform, notify } = useFeedback();
@@ -45,7 +49,7 @@ export default function SettingsPage() {
         .then((e) => setUsage(`约 ${((e.usage ?? 0) / 1024 / 1024).toFixed(2)} MB`))
         .catch(() => {});
     }
-  }, [records]);
+  }, [records, repository]);
   async function exportJSON() {
     if (!(await flushAllSaves())) {
       notify('存在尚未保存的编辑，请重试保存后再备份。', true);
@@ -103,7 +107,7 @@ export default function SettingsPage() {
             <div>
               <strong>此设备 · 浏览器 IndexedDB</strong>
               <p>{location.origin}</p>
-              <Tag color="green">本地游客空间 · {records.length} 条可见记录</Tag>
+              <Tag color="green">{cloud.user ? '当前账号空间' : '本地游客空间'} · {records.length} 条可见记录</Tag>
             </div>
           </div>
           <p className="small muted">
@@ -141,20 +145,9 @@ export default function SettingsPage() {
             申请持久化存储
           </button>
         </Card>
-        <Card>
-          <SectionTitle title="云端账户与同步" />
-          <div className="cloud-empty">
-            <LockKeyhole size={33} />
-            <h3>当前为完整本地模式</h3>
-            <p>数据仅保存在此设备浏览器。P0 尚未启用 Supabase 登录和云同步。</p>
-            <Tag>最后成功同步：无</Tag>
-          </div>
-          <p className="small muted">
-            账户登录、游客迁移、版本冲突与双向同步将在 P1
-            一起验证。环境变量示例与实现清单位于项目文档。
-          </p>
-        </Card>
+        <CloudAccountPanel />
       </div>
+      <ConflictPanel />
       <SectionTitle title="备份与恢复" />
       <Card className="backup-card">
         <div className="backup-actions">
@@ -274,17 +267,18 @@ export default function SettingsPage() {
             部署。
           </li>
           <li>
-            本应用不上传照片、录音、日志，也不包含广告追踪。云同步只有在 P1 完成并配置服务后才可用。
+            本应用不包含广告追踪，也不上传照片或录音。登录并完成配置后，当前账号空间内的私人文字记录会同步到你配置的 Supabase 项目；游客数据需要明确选择迁移。
           </li>
         </ul>
       </Card>
       <Card className="danger-zone">
         <div>
           <h3>清空当前记录</h3>
-          <p>删除此游客空间的业务记录与本地队列，并保留一个恢复快照。不会操作其他来源的数据。</p>
+          <p>{cloud.user ? '账号空间请使用指定记录的删除操作。清空本机缓存或替换整个账号空间会影响同步基线，当前暂不开放；游客模式仍可清空。' : '删除此游客空间的业务记录与本地队列，并保留一个恢复快照。不会操作其他来源的数据。'}</p>
         </div>
         <button
           className="button danger-button"
+          disabled={!!cloud.user}
           onClick={() => {
             setDanger(true);
             setConfirmText('');
@@ -321,11 +315,11 @@ export default function SettingsPage() {
             恢复方式
             <select value={mode} onChange={(e) => setMode(e.target.value as typeof mode)}>
               <option value="merge">合并：保留原记录，不同内容创建副本</option>
-              <option value="replace">替换：用备份替换当前空间的记录</option>
+              <option value="replace" disabled={!!cloud.user}>替换：用备份替换当前游客空间的记录</option>
             </select>
           </label>
           <p className="small muted">
-            不会接续原备份的账号或上传授权。数据写入当前游客空间，导入失败时原有记录保留。
+            不会接续原备份的账号或上传授权。数据写入当前空间，导入失败时原有记录保留。账号空间仅支持合并，新增内容作为本机修改等待同步。
             合并时已有计划、主题、课程进度与笔记继续优先显示，不同内容保留为导入副本。
           </p>
           <div className="form-row">

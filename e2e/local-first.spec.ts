@@ -92,6 +92,38 @@ async function exportBackup(page: Page) {
   };
 }
 
+test('结构迁移回归：Dashboard 与学院导航及真实统计', async ({ page }) => {
+  await initialize(page);
+  await recordTraining(page, '用于检查首页统计的五分钟练习。');
+  await completeCourse(page, '结构迁移后的课程笔记。');
+  await createJournal(page, '结构迁移的复盘', '首页应展示这条真实记录。');
+  await page.goto('/#/');
+  await expect(page.locator('.stat').filter({ hasText: '课程完成' }).locator('strong')).toHaveText(
+    /1\s*\/\s*3/,
+  );
+  await expect(page.locator('.stat').filter({ hasText: '现实训练' }).locator('strong')).toHaveText(
+    '1次',
+  );
+  await expect(page.locator('.stat').filter({ hasText: '累计训练' }).locator('strong')).toHaveText(
+    '5分钟',
+  );
+  await expect(page.locator('.weekly-summary strong')).toHaveText('5分钟');
+  await expect(page.locator('.journal-preview')).toContainText('结构迁移的复盘');
+  await page.getByRole('button', { name: '知识掌握', exact: true }).click();
+  await expect(page.locator('.chart-explanation')).toContainText('平均正确率');
+  await page.reload();
+  await expect(page.locator('.stat').filter({ hasText: '现实训练' }).locator('strong')).toHaveText(
+    '1次',
+  );
+  await page.locator('.hero-actions').getByRole('link', { name: '继续学习' }).click();
+  await expect(page).toHaveURL(/academy\/M04-L02/);
+  await page.goto('/#/academy');
+  await expect(page.locator('.academy-module')).toHaveCount(12);
+  await page.getByRole('button', { name: '正式课程 · M04' }).click();
+  await expect(page.locator('.academy-module')).toHaveCount(1);
+  await expect(page.locator('.course-list')).toContainText('已完成');
+});
+
 test('日志创建、自动保存、修改和刷新恢复', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await initialize(page);

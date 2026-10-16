@@ -20,7 +20,10 @@ import {
   ArrowUpRight,
   CircleHelp,
 } from 'lucide-react';
-import { repository } from '../data/repository';
+import { useRepository } from '../hooks/useRepository';
+import { useCloud } from '../cloud/context';
+import { useSync } from './SyncProvider';
+import { GuestMigration } from '../components/GuestMigration';
 import { useRecords } from '../hooks/useRecords';
 import { modules, lessons, scenarios } from '../content';
 import { Onboarding } from './Onboarding';
@@ -51,6 +54,9 @@ const links = [
   { to: '/studio', text: '风格工作室', icon: Palette },
 ];
 export default function App() {
+  const repository = useRepository();
+  const cloud = useCloud();
+  const sync = useSync();
   const profiles = useRecords('profile');
   const profile = profiles[0]?.payload as Profile | undefined;
   const progress = useRecords('courseProgress');
@@ -62,8 +68,6 @@ export default function App() {
   const [mobile, setMobile] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const [search, setSearch] = useState('');
-  const [queue, setQueue] = useState(0);
-  const all = useRecords();
   const settings = useRecords('appSettings');
   useEffect(() => subscribeSaves(() => setSaveError(hasFailedSaves())), []);
   useEffect(() => {
@@ -107,10 +111,10 @@ export default function App() {
     repository
       .list('profile')
       .then((items) => {
-        if (!items.length) setSetup(true);
+        if (!items.length && !cloud.user) setSetup(true);
       })
       .catch(() => notify('无法访问本地数据库，请检查浏览器存储权限。', true));
-  }, [notify]);
+  }, [notify, repository, cloud.user]);
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     addEventListener('online', update);
@@ -120,12 +124,6 @@ export default function App() {
       removeEventListener('offline', update);
     };
   }, []);
-  useEffect(() => {
-    repository
-      .countOutbox('guest')
-      .then(setQueue)
-      .catch(() => setQueue(0));
-  }, [all]);
   useEffect(() => {
     document.documentElement.dataset.theme =
       (settings[0]?.payload as { theme: string } | undefined)?.theme ?? 'light';
@@ -199,7 +197,7 @@ export default function App() {
           <div className="avatar">{profile?.name.slice(0, 1) ?? '我'}</div>
           <div>
             <strong>{profile?.name ?? '成长探索者'}</strong>
-            <span>本地游客 · 私人空间</span>
+            <span>{cloud.user ? '已登录 · 独立账号空间' : '本地游客 · 私人空间'}</span>
           </div>
           <ChevronRight size={16} />
         </button>
@@ -245,7 +243,7 @@ export default function App() {
           </div>
           <Link to="/settings" className="status-private" title="查看数据保存位置">
             <ShieldCheck size={17} />
-            <span>本地模式</span>
+            <span>{cloud.user ? sync.running ? '正在同步' : '账号空间' : '本地模式'}</span>
           </Link>
           <button className="top-avatar" onClick={() => setSetup(true)} aria-label="编辑我的计划">
             {profile?.name.slice(0, 1) ?? '我'}
@@ -253,10 +251,10 @@ export default function App() {
         </header>
         <div className="status-strip">
           <span>
-            <i className="status-dot" /> IndexedDB 本机存储 · {queue} 项本地变更
+            <i className="status-dot" /> IndexedDB 本机存储 · {sync.pending} 项{cloud.user ? '修改等待同步' : '本地变更'}
           </span>
           <span>
-            云同步未启用 · 最后同步：无{' '}
+            {cloud.user ? `${sync.conflicts ? `发现 ${sync.conflicts} 份不同版本` : sync.error ? '同步遇到问题，本地数据仍保留' : sync.running ? '正在同步云端' : sync.lastSuccessAt && !sync.pending ? '云端同步完成' : '等待云端同步'} · 最后同步：${sync.lastSuccessAt ? new Date(sync.lastSuccessAt).toLocaleString('zh-CN') : '无'}` : '当前为本地模式，数据仅保存在此设备浏览器中。'}{' '}
             <Link to="/settings">
               <CircleHelp size={13} />
             </Link>
@@ -329,13 +327,14 @@ export default function App() {
             CHARISMA LAB <b>·</b> 成为自己喜欢的样子
           </span>
           <span>
-            P0 本地优先 <b>·</b> 不评价人格价值
+            P1 本地优先 <b>·</b> 不评价人格价值
           </span>
         </footer>
       </div>
       {setup && (
         <Onboarding initial={profile} id={profiles[0]?.id} onClose={() => setSetup(false)} />
       )}
+      <GuestMigration />
       <div className="mobile-bottom">
         {links
           .filter((l) => ['/', '/academy', '/training', '/journal'].includes(l.to))

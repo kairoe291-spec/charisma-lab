@@ -84,7 +84,8 @@ export interface ConflictRecord {
   ownerScope: string;
   entityId: string;
   local: BusinessRecord;
-  remote: BusinessRecord;
+  remote: BusinessRecord | null;
+  mutationId?: string;
   detectedAt: string;
   resolvedAt?: string;
 }
@@ -100,7 +101,7 @@ export interface Backup {
 export interface SafetyBackup {
   id: string;
   ownerScope: string;
-  reason: 'import-merge' | 'import-replace' | 'clear';
+  reason: 'import-merge' | 'import-replace' | 'clear' | 'guest-migration' | 'conflict-resolution';
   createdAt: string;
   backup: Backup;
 }

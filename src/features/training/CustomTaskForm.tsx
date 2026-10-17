@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { modules } from '../../content';
-import { useRepository } from '../../hooks/useRepository';
+import { useTrainingService } from '../../hooks/useFeatureServices';
 import { useFeedback } from '../../shared/feedback';
 import { Dialog } from '../../shared/ui';
 
 export function CustomTaskForm({ onClose }: { onClose: () => void }) {
-  const repository = useRepository();
+  const trainingService = useTrainingService();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [minutes, setMinutes] = useState(5);
@@ -20,7 +20,7 @@ export function CustomTaskForm({ onClose }: { onClose: () => void }) {
           setSaving(true);
           if (
             await perform(() =>
-              repository.save('trainingTask', { title, description, minutes, moduleId }),
+              trainingService.createTask({ title, description, minutes, moduleId }),
             )
           )
             onClose();

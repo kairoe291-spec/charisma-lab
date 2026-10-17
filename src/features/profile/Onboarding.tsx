@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sprout, Check } from 'lucide-react';
 import { modules } from '../../content';
-import { useRepository } from '../../hooks/useRepository';
+import { useProfileService } from '../../hooks/useFeatureServices';
 import { useFeedback } from '../../shared/feedback';
 import { today } from '../../utils/files';
 import { Dialog } from '../../shared/ui';
@@ -15,7 +15,7 @@ export function Onboarding({
   id?: string;
   onClose: () => void;
 }) {
-  const repository = useRepository();
+  const profileService = useProfileService();
   const [form, setForm] = useState<Profile>(
     initial ?? {
       name: '',
@@ -44,7 +44,7 @@ export function Onboarding({
         onSubmit={async (e) => {
           e.preventDefault();
           setSaving(true);
-          if (await perform(() => repository.save('profile', form, id))) {
+          if (await perform(() => profileService.saveProfile(form, id))) {
             onClose();
           }
           setSaving(false);

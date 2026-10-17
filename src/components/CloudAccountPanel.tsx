@@ -5,7 +5,7 @@ import { requestCloudDeletion } from '../cloud/transport';
 import { useSync } from '../app/SyncProvider';
 import { useFeedback } from '../app/context';
 import { flushAllSaves } from '../app/saveCoordinator';
-import { useRepository } from '../hooks/useRepository';
+import { useDataManagementService } from '../hooks/useFeatureServices';
 import { downloadFile, today } from '../utils/files';
 import { Card, Dialog, SectionTitle, Tag } from './ui';
 import { GuestMigration } from './GuestMigration';
@@ -13,7 +13,7 @@ import { GuestMigration } from './GuestMigration';
 export function CloudAccountPanel() {
   const cloud = useCloud();
   const sync = useSync();
-  const repository = useRepository();
+  const dataService = useDataManagementService();
   const { perform, notify } = useFeedback();
   const [url, setUrl] = useState(cloud.config?.url ?? '');
   const [key, setKey] = useState('');
@@ -79,7 +79,7 @@ export function CloudAccountPanel() {
       <p>这是同步软删除，不是 Supabase 账号注销或管理员级物理擦除。尚未同步的本机修改会保留并可能形成冲突；需要彻底删除时请按 README 联系项目管理员。</p>
       <button className="button secondary" disabled={busy} onClick={() => void action(async () => {
         if (!(await flushAllSaves())) throw new Error('请先完成本机保存。');
-        const backup = await repository.exportBackup();
+        const backup = await dataService.exportBackup();
         downloadFile(`云端删除前备份-${today()}.json`, JSON.stringify(backup, null, 2));
         setDownloaded(true);
       }, '备份已生成，请保存到独立位置。')}>先下载本机备份</button>

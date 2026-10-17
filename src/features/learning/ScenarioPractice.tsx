@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { ArrowRight, MessagesSquare, RotateCcw } from 'lucide-react';
 import { scenarios } from '../../content';
 import type { Scenario } from '../../types';
-import { useRepository } from '../../hooks/useRepository';
-import { useRecords } from '../../hooks/useRecords';
+import { useScenarioService } from '../../hooks/useFeatureServices';
+import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
 import { Card, PageHeading, Tag, SectionTitle } from '../../shared/ui';
 export function ScenarioPractice() {
+  const scenarioService = useScenarioService();
   const [active, setActive] = useState<Scenario | null>(null);
-  const history = useRecords('scenarioAttempt');
+  const history = useServiceQuery(() => scenarioService.listAttempts(), scenarioService);
   return (
     <>
       <PageHeading
@@ -58,7 +59,7 @@ export function ScenarioPractice() {
   );
 }
 function ScenarioPlayer({ scenario, onClose }: { scenario: Scenario; onClose: () => void }) {
-  const repository = useRepository();
+  const scenarioService = useScenarioService();
   const [nodeId, setNode] = useState('start');
   const [choice, setChoice] = useState<number | null>(null);
   const [path, setPath] = useState<string[]>([]);
@@ -149,7 +150,7 @@ function ScenarioPlayer({ scenario, onClose }: { scenario: Scenario; onClose: ()
               setSaving(true);
               if (
                 await perform(() =>
-                  repository.save('scenarioAttempt', { scenarioId: scenario.id, path, reflection }),
+                  scenarioService.saveAttempt({ scenarioId: scenario.id, path, reflection }),
                 )
               )
                 setSaved(true);

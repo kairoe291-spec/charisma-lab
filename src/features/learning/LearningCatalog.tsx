@@ -1,15 +1,17 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, CheckCircle2, Clock, Search } from 'lucide-react';
 import { modules, lessons } from '../../content';
-import { useRecords } from '../../hooks/useRecords';
+import { useLearningService } from '../../hooks/useFeatureServices';
+import { useServiceQuery } from '../../hooks/useServiceQuery';
 import type { CourseProgress as Progress } from '../../types';
 import { Card, PageHeading, Tag } from '../../shared/ui';
 import { useState } from 'react';
 export function LearningCatalog() {
+  const learningService = useLearningService();
   const [params] = useSearchParams();
   const [filter, setFilter] = useState(params.get('module') ?? 'all');
   const [search, setSearch] = useState('');
-  const progress = useRecords('courseProgress');
+  const progress = useServiceQuery(() => learningService.listProgress(), learningService);
   return (
     <>
       <PageHeading

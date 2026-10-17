@@ -2,16 +2,15 @@ import { useState } from 'react';
 import { Check, Clock, Plus, Target } from 'lucide-react';
 import { modules } from '../../content';
 import { CustomTaskForm } from './CustomTaskForm';
-import { getTrainingTasks, saveCompletedTraining } from './trainingService';
 import type { Training } from '../../types';
-import { useRepository } from '../../hooks/useRepository';
-import { useRecords } from '../../hooks/useRecords';
+import { useTrainingService } from '../../hooks/useFeatureServices';
+import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
 import { Card, Dialog, Empty, PageHeading, SectionTitle, Tag } from '../../shared/ui';
 import { today } from '../../utils/files';
 import type { TrainingRecord } from '../../types';
 export function TrainingWorkspace() {
-  const repository = useRepository();
+  const trainingService = useTrainingService();
   const [minutes, setMinutes] = useState(5);
   const [active, setActive] = useState<Training | null>(null);
   const [custom, setCustom] = useState(false);
@@ -20,10 +19,10 @@ export function TrainingWorkspace() {
   const [difficulty, setDifficulty] = useState('入门');
   const [saving, setSaving] = useState(false);
   const [historyDate, setHistoryDate] = useState('');
-  const records = useRecords('trainingRecord');
-  const tasks = useRecords('trainingTask');
+  const records = useServiceQuery(() => trainingService.listRecords(), trainingService);
+  const tasks = useServiceQuery(() => trainingService.listTasks(), trainingService);
   const { perform } = useFeedback();
-  const allTasks = getTrainingTasks(tasks);
+  const allTasks = trainingService.getTasks(tasks);
   return (
     <>
       <PageHeading
@@ -114,7 +113,7 @@ export function TrainingWorkspace() {
                     className="text-button danger"
                     onClick={() => {
                       if (confirm('删除这条训练记录？此操作会保存删除标记。'))
-                        void perform(() => repository.remove(r.id), '已在本机删除训练记录');
+                        void perform(() => trainingService.removeRecord(r.id), '已在本机删除训练记录');
                     }}
                   >
                     删除记录
@@ -138,7 +137,7 @@ export function TrainingWorkspace() {
               setSaving(true);
               if (
                 await perform(() =>
-                  saveCompletedTraining(repository, active, { date, difficulty, reflection }),
+                  trainingService.record(active, { date, difficulty, reflection }),
                 )
               )
                 setActive(null);

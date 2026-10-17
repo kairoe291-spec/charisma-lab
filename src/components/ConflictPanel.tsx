@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { useRepository } from '../hooks/useRepository';
+import { useDataManagementService } from '../hooks/useFeatureServices';
+import { useServiceQuery } from '../hooks/useServiceQuery';
 import { useFeedback } from '../app/context';
 import { useSync } from '../app/SyncProvider';
 import { flushAllSaves } from '../app/saveCoordinator';
@@ -15,8 +15,8 @@ function content(record: BusinessRecord | null) {
   return JSON.stringify(p, null, 2);
 }
 export function ConflictPanel() {
-  const repository = useRepository();
-  const conflicts = useLiveQuery(() => repository.listConflicts(), [repository], []);
+  const dataService = useDataManagementService();
+  const conflicts = useServiceQuery(() => dataService.listConflicts(), dataService);
   const [selected, setSelected] = useState<ConflictRecord | null>(null);
   if (!conflicts.length) return null;
   return <Card className="conflict-panel"><SectionTitle title="需要你确认的不同版本" />
@@ -26,7 +26,7 @@ export function ConflictPanel() {
   </Card>;
 }
 function ConflictEditor({ conflict, onClose }: { conflict: ConflictRecord; onClose: () => void }) {
-  const repository = useRepository();
+  const dataService = useDataManagementService();
   const { perform, notify } = useFeedback();
   const { runSync } = useSync();
   const [merging, setMerging] = useState(false);
@@ -44,7 +44,7 @@ function ConflictEditor({ conflict, onClose }: { conflict: ConflictRecord; onClo
         } else if (conflict.local.kind === 'lessonNote') payload = { ...conflict.local.payload, text: draft };
         else payload = JSON.parse(draft);
       }
-      await repository.resolveConflict(conflict.id, choice, payload);
+      await dataService.resolveConflict(conflict.id, choice, payload);
     }, '你的选择已保存到本机；原版本已保留恢复副本，联网后继续同步。');
     setBusy(false);
     if (ok) { onClose(); void runSync().catch(() => {}); }

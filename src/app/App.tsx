@@ -20,7 +20,8 @@ import {
   ArrowUpRight,
   CircleHelp,
 } from 'lucide-react';
-import { useRepository } from '../hooks/useRepository';
+import { useProfileService } from '../hooks/useFeatureServices';
+import { useServiceQuery } from '../hooks/useServiceQuery';
 import { useCloud } from '../cloud/context';
 import { useSync } from './SyncProvider';
 import { GuestMigration } from '../components/GuestMigration';
@@ -54,10 +55,10 @@ const links = [
   { to: '/studio', text: '风格工作室', icon: Palette },
 ];
 export default function App() {
-  const repository = useRepository();
+  const profileService = useProfileService();
   const cloud = useCloud();
   const sync = useSync();
-  const profiles = useRecords('profile');
+  const profiles = useServiceQuery(() => profileService.listProfiles(), profileService);
   const profile = profiles[0]?.payload as Profile | undefined;
   const progress = useRecords('courseProgress');
   const journals = useRecords('journalEntry');
@@ -108,13 +109,13 @@ export default function App() {
       notify('离线缓存未能注册，请在 HTTPS 或 localhost 的生产版本中重试。', true),
   });
   useEffect(() => {
-    repository
-      .list('profile')
+    profileService
+      .listProfiles()
       .then((items) => {
         if (!items.length && !cloud.user) setSetup(true);
       })
       .catch(() => notify('无法访问本地数据库，请检查浏览器存储权限。', true));
-  }, [notify, repository, cloud.user]);
+  }, [notify, profileService, cloud.user]);
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     addEventListener('online', update);

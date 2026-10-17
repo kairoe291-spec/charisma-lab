@@ -1,8 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useCloud } from '../cloud/context';
 import { SupabaseTransport } from '../cloud/transport';
-import { db } from '../data/database';
+import { useSyncLocalStatus } from '../hooks/useSyncLocalStatus';
 import { SyncEngine } from '../sync/engine';
 import type { SyncState } from '../sync/protocol';
 import { flushAllSaves } from './saveCoordinator';
@@ -14,16 +13,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const cloud = useCloud();
   const [state, setState] = useState<SyncState>(empty);
   const engine = useRef<SyncEngine | null>(null);
-  const queue = useLiveQuery(() => db.outbox.where('ownerScope').equals(cloud.scope).toArray(), [cloud.scope], []);
-  const metadata = useLiveQuery(() => db.syncMetadata.get([cloud.scope, 'sync']), [cloud.scope]);
-  const conflicts = useLiveQuery(() => db.conflicts.where('ownerScope').equals(cloud.scope).filter(c => !c.resolvedAt).count(), [cloud.scope], 0);
+  const { queue, metadata, conflicts } = useSyncLocalStatus(cloud.scope);
   const userId = cloud.user?.id;
   useEffect(() => {
     if (!cloud.client || !userId) return;
     let current = true;
     const isCurrent = () => current;
     const transport = new SupabaseTransport(cloud.client, { userId, scope: cloud.scope, isCurrent });
-    const instance = new SyncEngine({ database: db, transport, scope: cloud.scope, userId, isCurrent, onState: next => { if (current) setState(next); } });
+    const instance = new SyncEngine({ transport, scope: cloud.scope, userId, isCurrent, onState: next => { if (current) setState(next); } });
     engine.current = instance;
     const trigger = () => {
       if (!navigator.onLine || document.visibilityState === 'hidden') return;

@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Eye, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { useRepository } from '../../hooks/useRepository';
+import { useJournalService } from '../../hooks/useFeatureServices';
 import { useSaveQueue } from '../../hooks/useSaveQueue';
 import { hasUnsavedChanges } from '../../services/saveCoordinator';
 import { useFeedback } from '../../shared/feedback';
 import type { JournalEntry as Journal, BusinessRecord } from '../../types';
 import { Card, Tag } from '../../shared/ui';
-import { saveJournalEntry, parseJournalTags } from './journalService';
 
 export function JournalEditor({
   record,
@@ -16,7 +15,7 @@ export function JournalEditor({
   record: BusinessRecord<'journalEntry'>;
   onDeleted: () => void;
 }) {
-  const repository = useRepository();
+  const journalService = useJournalService();
   const [form, setForm] = useState<Journal>(record.payload);
   const [tags, setTags] = useState(record.payload.tags.join('，'));
   const [preview, setPreview] = useState(false);
@@ -37,7 +36,7 @@ export function JournalEditor({
   function update(patch: Partial<Journal>) {
     const next = { ...form, ...patch };
     setForm(next);
-    void enqueue(() => saveJournalEntry(repository, record.id, next));
+    void enqueue(() => journalService.save(record.id, next));
   }
   return (
     <Card className="journal-editor">
@@ -60,7 +59,7 @@ export function JournalEditor({
           onClick={async () => {
             if (confirm('确定删除这篇日志？建议先导出备份。')) {
               await enqueue(async () => {
-                if (await perform(() => repository.remove(record.id), '已在本机删除日志'))
+                if (await perform(() => journalService.remove(record.id), '已在本机删除日志'))
                   onDeleted();
               });
             }
@@ -107,7 +106,7 @@ export function JournalEditor({
           onChange={(e) => {
             setTags(e.target.value);
             update({
-              tags: parseJournalTags(e.target.value),
+              tags: journalService.parseTags(e.target.value),
             });
           }}
         />
@@ -132,7 +131,7 @@ export function JournalEditor({
         <span>Markdown · {form.body.length} 字 · 本机 IndexedDB</span>
         <button
           className="text-button"
-          onClick={() => void enqueue(() => saveJournalEntry(repository, record.id, form))}
+          onClick={() => void enqueue(() => journalService.save(record.id, form))}
         >
           立即保存 / 重试
         </button>

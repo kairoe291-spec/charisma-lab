@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Compass, Target } from 'lucide-react';
 import { modules, selfAssessmentQuestions, selfAssessmentGuidance } from '../../content';
-import { useRepository } from '../../hooks/useRepository';
+import { useAssessmentService } from '../../hooks/useFeatureServices';
+import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useRecords } from '../../hooks/useRecords';
 import { useFeedback } from '../../shared/feedback';
 import { Card, PageHeading, SectionTitle, Tag } from '../../shared/ui';
 import type { UserProfile as Profile, TrainingRecord } from '../../types';
-import { prepareSelfAssessment } from './assessmentService';
 export function AssessmentWorkspace() {
-  const repository = useRepository();
-  const results = useRecords('assessmentResult');
+  const assessmentService = useAssessmentService();
+  const results = useServiceQuery(() => assessmentService.listResults(), assessmentService);
   const journals = useRecords('journalEntry');
   const training = useRecords('trainingRecord');
   const profiles = useRecords('profile');
@@ -110,10 +110,9 @@ export function AssessmentWorkspace() {
                 disabled={Object.keys(answers).length !== 24 || saving}
                 onClick={async () => {
                   setSaving(true);
-                  const { all, computed } = prepareSelfAssessment(answers);
                   if (
                     await perform(
-                      () => repository.saveSelfAssessment(all, computed),
+                      () => assessmentService.submitSelfAssessment(answers),
                       '自评已保存到本机 · 每维度为两道题的平均值',
                     )
                   ) {

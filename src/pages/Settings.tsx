@@ -7,7 +7,7 @@ import {
   ShieldCheck,
   Upload,
 } from 'lucide-react';
-import { useRepository } from '../hooks/useRepository';
+import { useDataManagementService } from '../hooks/useFeatureServices';
 import { useCloud } from '../cloud/context';
 import { CloudAccountPanel } from '../components/CloudAccountPanel';
 import { ConflictPanel } from '../components/ConflictPanel';
@@ -19,7 +19,7 @@ import type { Backup, SafetyBackup } from '../domain/types';
 import type { TrainingRecord } from '../app/types';
 import { flushAllSaves } from '../app/saveCoordinator';
 export default function SettingsPage() {
-  const repository = useRepository();
+  const dataService = useDataManagementService();
   const cloud = useCloud();
   const records = useRecords();
   const settings = useRecords('appSettings');
@@ -35,7 +35,7 @@ export default function SettingsPage() {
   const [clearing, setClearing] = useState(false);
   const theme = (settings[0]?.payload as { theme: string } | undefined)?.theme ?? 'light';
   useEffect(() => {
-    repository
+    dataService
       .listSafetyBackups()
       .then(setSnapshots)
       .catch(() => {});
@@ -49,14 +49,14 @@ export default function SettingsPage() {
         .then((e) => setUsage(`约 ${((e.usage ?? 0) / 1024 / 1024).toFixed(2)} MB`))
         .catch(() => {});
     }
-  }, [records, repository]);
+  }, [records, dataService]);
   async function exportJSON() {
     if (!(await flushAllSaves())) {
       notify('存在尚未保存的编辑，请重试保存后再备份。', true);
       return;
     }
     await perform(async () => {
-      const b = await repository.exportBackup();
+      const b = await dataService.exportBackup();
       downloadFile(`charisma-lab-${today()}.json`, JSON.stringify(b, null, 2));
     }, '备份已生成，请保存到独立的位置。');
   }
@@ -182,7 +182,7 @@ export default function SettingsPage() {
                   return;
                 }
                 try {
-                  setBackup(repository.previewBackup(await file.text()));
+                  setBackup(dataService.previewBackup(await file.text()));
                 } catch (err) {
                   notify(err instanceof Error ? err.message : '无法解析备份', true);
                 }
@@ -238,11 +238,7 @@ export default function SettingsPage() {
             key={t.id}
             onClick={() =>
               void perform(() =>
-                repository.save(
-                  'appSettings',
-                  { theme: t.id as 'light' | 'dark' | 'warm' },
-                  settings[0]?.id,
-                ),
+                dataService.saveTheme(t.id as 'light' | 'dark' | 'warm', settings[0]?.id),
               )
             }
           >
@@ -338,7 +334,7 @@ export default function SettingsPage() {
                 setImporting(true);
                 if (
                   await perform(
-                    () => repository.importBackup(backup, mode),
+                    () => dataService.importBackup(backup, mode),
                     '备份已恢复到本机，安全快照已保留。',
                   )
                 )
@@ -382,7 +378,7 @@ export default function SettingsPage() {
                 return;
               }
               setClearing(true);
-              if (await perform(() => repository.clear(), '当前记录已清空，恢复快照仍保留在本机。'))
+              if (await perform(() => dataService.clear(), '当前记录已清空，恢复快照仍保留在本机。'))
                 setDanger(false);
               setClearing(false);
             }}

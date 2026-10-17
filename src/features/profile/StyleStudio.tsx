@@ -12,19 +12,18 @@ import {
   Trash2,
 } from 'lucide-react';
 import { PageHeading, Card, SectionTitle, Dialog, Tag } from '../../shared/ui';
-import { useRecords } from '../../hooks/useRecords';
+import { useProfileService } from '../../hooks/useFeatureServices';
+import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
-import { useRepository } from '../../hooks/useRepository';
 import type { BusinessRecord, RecordPayloads } from '../../types';
-import { today } from '../../utils/files';
 
 const goalStatuses = ['进行中', '已完成', '暂缓'];
 const goalPriorities = ['高', '中', '低'];
 
 export function StyleStudio() {
-  const repository = useRepository();
-  const interestRecords: BusinessRecord[] = useRecords('userInterest');
-  const goalRecords: BusinessRecord[] = useRecords('growthGoal');
+  const profileService = useProfileService();
+  const interestRecords: BusinessRecord[] = useServiceQuery(() => profileService.listInterests(), profileService);
+  const goalRecords: BusinessRecord[] = useServiceQuery(() => profileService.listGoals(), profileService);
   const interests = interestRecords.filter(
     (record): record is BusinessRecord<'userInterest'> => record.kind === 'userInterest',
   );
@@ -44,13 +43,13 @@ export function StyleStudio() {
     const title = record.kind === 'userInterest' ? record.payload.name : record.payload.title;
     if (!confirm(`确定删除「${title}」？建议先导出备份，删除后本机会保留删除标记。`)) return;
     setBusyId(record.id);
-    await perform(() => repository.remove(record.id), '已在本机删除记录');
+    await perform(() => profileService.removeRecord(record), '已在本机删除记录');
     setBusyId(null);
   }
 
   async function changeGoalStatus(record: BusinessRecord<'growthGoal'>, status: string) {
     setBusyId(record.id);
-    await perform(() => repository.save('growthGoal', { ...record.payload, status }, record.id));
+    await perform(() => profileService.changeGoalStatus(record, status));
     setBusyId(null);
   }
 
@@ -227,7 +226,7 @@ function InterestEditor({
   initial?: BusinessRecord<'userInterest'>;
   onClose: () => void;
 }) {
-  const repository = useRepository();
+  const profileService = useProfileService();
   const [form, setForm] = useState<RecordPayloads['userInterest']>(
     initial?.payload ?? { name: '', note: '' },
   );
@@ -243,7 +242,7 @@ function InterestEditor({
     setSaving(true);
     if (
       await perform(() =>
-        repository.save('userInterest', { ...form, name: form.name.trim() }, initial?.id),
+        profileService.saveInterest(form, initial?.id),
       )
     )
       onClose();
@@ -294,7 +293,7 @@ function GoalEditor({
   initial?: BusinessRecord<'growthGoal'>;
   onClose: () => void;
 }) {
-  const repository = useRepository();
+  const profileService = useProfileService();
   const [form, setForm] = useState<RecordPayloads['growthGoal']>(
     initial?.payload ?? { title: '', deadline: '', priority: '中', status: '进行中' },
   );
@@ -310,7 +309,7 @@ function GoalEditor({
     setSaving(true);
     if (
       await perform(() =>
-        repository.save('growthGoal', { ...form, title: form.title.trim() }, initial?.id),
+        profileService.saveGoal(form, initial?.id),
       )
     )
       onClose();
@@ -378,7 +377,7 @@ function GoalEditor({
 }
 
 function StyleReflection() {
-  const repository = useRepository();
+  const profileService = useProfileService();
   const [feeling, setFeeling] = useState('');
   const [scene, setScene] = useState('');
   const [action, setAction] = useState('');
@@ -392,17 +391,7 @@ function StyleReflection() {
     if (!hasContent) return;
     setSaving(true);
     await perform(async () => {
-      const entry = await repository.save(
-        'journalEntry',
-        {
-          title: `个人风格探索 · ${today()}`,
-          body: `## 我希望日常给自己的感觉\n\n${feeling.trim() || '暂时留白'}\n\n## 我想保留的真实场景\n\n${scene.trim() || '暂时留白'}\n\n## 接下来的一小步\n\n${action.trim() || '暂时留白'}`,
-          category: '思想笔记',
-          date: today(),
-          tags: ['风格探索'],
-        },
-        journalId,
-      );
+      const entry = await profileService.saveStyleReflection({ feeling, scene, action }, journalId);
       setJournalId(entry.id);
     });
     setSaving(false);

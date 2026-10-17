@@ -1,4 +1,4 @@
-import type { Repository } from '../../data/repository';
+import type { EntityRepository } from '../../data/repositories/contracts';
 import type { BusinessRecord, JournalEntry } from '../../types';
 import { today } from '../../utils/files';
 
@@ -16,8 +16,8 @@ export function filterJournalEntries(
   });
 }
 
-export function createJournalEntry(repository: Repository) {
-  return repository.save('journalEntry', {
+export function createJournalEntry(repository: EntityRepository<'journalEntry'>) {
+  return repository.save({
     title: '未命名日志',
     body: '',
     tags: [],
@@ -26,12 +26,23 @@ export function createJournalEntry(repository: Repository) {
   });
 }
 
-export function saveJournalEntry(repository: Repository, id: string, entry: JournalEntry) {
+export function saveJournalEntry(repository: EntityRepository<'journalEntry'>, id: string, entry: JournalEntry) {
   return repository.save(
-    'journalEntry',
     { ...entry, title: entry.title.trim() || '未命名日志' },
     id,
   );
+}
+
+export function createJournalService(repository: EntityRepository<'journalEntry'>) {
+  return {
+    list: () => repository.list(),
+    get: (id: string) => repository.get(id),
+    create: () => createJournalEntry(repository),
+    save: (id: string, entry: JournalEntry) => saveJournalEntry(repository, id, entry),
+    remove: (id: string) => repository.remove(id),
+    filter: filterJournalEntries,
+    parseTags: parseJournalTags,
+  };
 }
 
 export function parseJournalTags(value: string) {

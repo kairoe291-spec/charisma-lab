@@ -2,12 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Bookmark, CheckCircle2, Clock } from 'lucide-react';
 import { lessons, scenarios } from '../../content';
-import { useRepository } from '../../hooks/useRepository';
-import { useRecords } from '../../hooks/useRecords';
+import { useLearningService } from '../../hooks/useFeatureServices';
+import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useSaveQueue } from '../../hooks/useSaveQueue';
 import { useFeedback } from '../../shared/feedback';
 import type { CourseProgress as Progress, LessonNote as Note } from '../../types';
-import { saveLessonProgress, saveLessonNote } from './learningService';
 import { Card, Tag } from '../../shared/ui';
 import { flushAllSaves, hasUnsavedChanges } from '../../services/saveCoordinator';
 const stages = ['认识概念', '案例解析', '场景模拟', '现实训练', '测试与复盘'];
@@ -24,10 +23,10 @@ export function LessonReader() {
   );
 }
 function LessonContent({ lessonId }: { lessonId: string }) {
-  const repository = useRepository();
+  const learningService = useLearningService();
   const lesson = lessons.find((l) => l.id === lessonId)!;
-  const progress = useRecords('courseProgress');
-  const notes = useRecords('lessonNote');
+  const progress = useServiceQuery(() => learningService.listProgress(), learningService);
+  const notes = useServiceQuery(() => learningService.listNotes(), learningService);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const current = progress.find((p) => (p.payload as Progress).lessonId === lessonId);
   const lessonNotes = notes.filter((record) => (record.payload as Note).lessonId === lessonId);
@@ -61,11 +60,10 @@ function LessonContent({ lessonId }: { lessonId: string }) {
     }
   }, [note]);
   function writeProgress(patch: Partial<Progress>) {
-    return saveLessonProgress(repository, lessonId, patch, progressId.current);
+    return learningService.saveProgress(lessonId, patch, progressId.current);
   }
   function writeNote(patch: Partial<Note>, toggleBookmark = false) {
-    return saveLessonNote(
-      repository,
+    return learningService.saveNote(
       lessonId,
       patch,
       noteId.current,

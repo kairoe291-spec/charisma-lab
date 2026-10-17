@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { NotebookPen, Plus, Search } from 'lucide-react';
-import { useRepository } from '../../hooks/useRepository';
-import { useRecords } from '../../hooks/useRecords';
+import { useJournalService } from '../../hooks/useFeatureServices';
+import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
 import type { JournalEntry as Journal, BusinessRecord } from '../../types';
 import { PageHeading, Card, Empty } from '../../shared/ui';
 import { JournalEditor } from './JournalEditor';
-import { filterJournalEntries, createJournalEntry } from './journalService';
 
 export function JournalWorkspace() {
-  const repository = useRepository();
-  const records = useRecords('journalEntry');
+  const journalService = useJournalService();
+  const records = useServiceQuery(() => journalService.list(), journalService);
   const [params, setParams] = useSearchParams();
   const id = params.get('entry');
   const selected = records.find((r) => r.id === id);
@@ -19,7 +18,7 @@ export function JournalWorkspace() {
   const [category, setCategory] = useState('全部');
   const { perform } = useFeedback();
   const [creating, setCreating] = useState(false);
-  const visible = filterJournalEntries(records, search, category);
+  const visible = journalService.filter(records, search, category);
   return (
     <>
       <PageHeading
@@ -33,7 +32,7 @@ export function JournalWorkspace() {
             onClick={async () => {
               setCreating(true);
               await perform(async () => {
-                const r = await createJournalEntry(repository);
+                const r = await journalService.create();
                 setParams({ entry: r.id });
               });
               setCreating(false);

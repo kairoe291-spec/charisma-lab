@@ -244,7 +244,7 @@ test('已缓存应用离线训练、编辑日志、关闭后重开仍恢复数�
   ).toBeVisible();
   await context.setOffline(false);
   await expect(reopened.locator('.top-status')).toContainText('在线');
-  await expect(reopened.locator('.status-strip')).toContainText('云同步未启用');
+  await expect(reopened.locator('.status-strip')).toContainText('当前为本地模式');
   await expect(reopened.locator('.status-strip')).toContainText(/[1-9]\d* 项本地变更/);
 });
 

@@ -281,8 +281,12 @@ export class Repository {
         const sources = [...backup.records].sort((a, b) => Number(b.kind === 'trainingTask') - Number(a.kind === 'trainingTask'));
         for (const source of sources) {
           const key = naturalKey(source);
-          const primary = key ? existing.find((record) => !record.deletedAt && !record.importedCopyOf && naturalKey(record) === key) : undefined;
-          const previous = byId.get(source.id) ?? primary;
+          const primary = mode === 'merge' && key
+            ? existing.find((record) => !record.deletedAt && !record.importedCopyOf && naturalKey(record) === key)
+            : undefined;
+          // Replace starts from an empty scope. Imported rows must not become
+          // "existing" matches for later backup rows with the same natural key.
+          const previous = mode === 'merge' ? (byId.get(source.id) ?? primary) : undefined;
           const importKey = `backupImport:${source.ownerScope}:${source.id}:${source.localRevision}`;
           const mapped = account ? await this.database.syncMetadata.get([scope, importKey]) : undefined;
           const sourceSignature = canonical({ kind: source.kind, payload: source.payload, deleted: Boolean(source.deletedAt) });

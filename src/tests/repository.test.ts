@@ -336,6 +336,52 @@ describe('backup safety', () => {
     },
   );
 
+  it.each([
+    ['profile', 'primary-first'],
+    ['profile', 'copy-first'],
+    ['lessonNote', 'primary-first'],
+    ['lessonNote', 'copy-first'],
+  ] as const)('replaces %s with stable IDs in %s backup order', async (kind, order) => {
+    const before = {
+      profile: {
+        name: '备份昵称',
+        focus: ['M04'],
+        dailyMinutes: 5,
+        weeklyDays: 3,
+        scene: '表达',
+        goal: '从容交流',
+        startDate: '2026-10-13',
+      },
+      lessonNote: { lessonId: 'M04-L01', text: '备份笔记', bookmarked: false },
+    } satisfies Pick<RecordPayloads, 'profile' | 'lessonNote'>;
+    const current = {
+      profile: { ...before.profile, name: '当前昵称' },
+      lessonNote: { ...before.lessonNote, text: '当前笔记' },
+    } satisfies Pick<RecordPayloads, 'profile' | 'lessonNote'>;
+    const original = await repository.save(kind, before[kind]);
+    const firstBackup = await repository.exportBackup();
+    await repository.save(kind, current[kind], original.id);
+    await repository.importBackup(firstBackup, 'merge');
+    const copy = (await repository.list(kind)).find((record) => record.importedCopyOf === original.id)!;
+    const accountRecord = await repository.save(kind, before[kind], original.id, 'user:a');
+    const backup = await repository.exportBackup();
+    const primarySource = backup.records.find((record) => record.id === original.id)!;
+    const copySource = backup.records.find((record) => record.id === copy.id)!;
+    backup.records = order === 'primary-first' ? [primarySource, copySource] : [copySource, primarySource];
+
+    const result = await repository.importBackup(backup, 'replace');
+
+    expect((await repository.get(original.id))?.payload).toEqual(current[kind]);
+    expect((await repository.get(copy.id))?.payload).toEqual(before[kind]);
+    expect((await repository.get(copy.id))?.importedCopyOf).toBe(original.id);
+    expect((await repository.list(kind)).map((record) => record.id).sort()).toEqual(
+      [original.id, copy.id].sort(),
+    );
+    expect(await repository.get(original.id, 'user:a')).toEqual(accountRecord);
+    expect(result).toMatchObject({ added: 2, copied: 0, skipped: 0 });
+    expect(await repository.countOutbox()).toBe(2);
+  });
+
   it('allows an imported alternative to be used when its original is absent', async () => {
     const saved = await repository.save('lessonNote', {
       lessonId: 'M04-L01',

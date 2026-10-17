@@ -22,8 +22,14 @@ const goalPriorities = ['高', '中', '低'];
 
 export function StyleStudio() {
   const profileService = useProfileService();
-  const interestRecords: BusinessRecord[] = useServiceQuery(() => profileService.listInterests(), profileService);
-  const goalRecords: BusinessRecord[] = useServiceQuery(() => profileService.listGoals(), profileService);
+  const interestRecords: BusinessRecord[] = useServiceQuery(
+    () => profileService.listInterests(),
+    profileService,
+  );
+  const goalRecords: BusinessRecord[] = useServiceQuery(
+    () => profileService.listGoals(),
+    profileService,
+  );
   const interests = interestRecords.filter(
     (record): record is BusinessRecord<'userInterest'> => record.kind === 'userInterest',
   );
@@ -240,12 +246,7 @@ function InterestEditor({
       return;
     }
     setSaving(true);
-    if (
-      await perform(() =>
-        profileService.saveInterest(form, initial?.id),
-      )
-    )
-      onClose();
+    if (await perform(() => profileService.saveInterest(form, initial?.id))) onClose();
     setSaving(false);
   }
 
@@ -307,12 +308,7 @@ function GoalEditor({
       return;
     }
     setSaving(true);
-    if (
-      await perform(() =>
-        profileService.saveGoal(form, initial?.id),
-      )
-    )
-      onClose();
+    if (await perform(() => profileService.saveGoal(form, initial?.id))) onClose();
     setSaving(false);
   }
 

@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  Database,
-  Download,
-  HardDrive,
-  RefreshCw,
-  ShieldCheck,
-  Upload,
-} from 'lucide-react';
+import { Database, Download, HardDrive, RefreshCw, ShieldCheck, Upload } from 'lucide-react';
 import { useDataManagementService } from '../hooks/useFeatureServices';
 import { useCloud } from '../cloud/context';
 import { CloudAccountPanel } from '../components/CloudAccountPanel';
@@ -38,18 +31,18 @@ export default function SettingsPage() {
     dataService
       .listSafetyBackups()
       .then(setSnapshots)
-      .catch(() => {});
+      .catch(() => notify('无法读取本机安全快照，请检查浏览器存储权限。', true));
     if (navigator.storage) {
       navigator.storage
         .persisted?.()
         .then((p) => setPersistent(p ? '已获得持久化存储' : '当前为尽力保留存储'))
-        .catch(() => {});
+        .catch(() => setPersistent('无法读取浏览器存储状态'));
       navigator.storage
         .estimate?.()
         .then((e) => setUsage(`约 ${((e.usage ?? 0) / 1024 / 1024).toFixed(2)} MB`))
-        .catch(() => {});
+        .catch(() => setUsage('无法读取存储用量'));
     }
-  }, [records, dataService]);
+  }, [records, dataService, notify]);
   async function exportJSON() {
     if (!(await flushAllSaves())) {
       notify('存在尚未保存的编辑，请重试保存后再备份。', true);
@@ -107,7 +100,9 @@ export default function SettingsPage() {
             <div>
               <strong>此设备 · 浏览器 IndexedDB</strong>
               <p>{location.origin}</p>
-              <Tag color="green">{cloud.user ? '当前账号空间' : '本地游客空间'} · {records.length} 条可见记录</Tag>
+              <Tag color="green">
+                {cloud.user ? '当前账号空间' : '本地游客空间'} · {records.length} 条可见记录
+              </Tag>
             </div>
           </div>
           <p className="small muted">
@@ -263,14 +258,19 @@ export default function SettingsPage() {
             部署。
           </li>
           <li>
-            本应用不包含广告追踪，也不上传照片或录音。登录并完成配置后，当前账号空间内的私人文字记录会同步到你配置的 Supabase 项目；游客数据需要明确选择迁移。
+            本应用不包含广告追踪，也不上传照片或录音。登录并完成配置后，当前账号空间内的私人文字记录会同步到你配置的
+            Supabase 项目；游客数据需要明确选择迁移。
           </li>
         </ul>
       </Card>
       <Card className="danger-zone">
         <div>
           <h3>清空当前记录</h3>
-          <p>{cloud.user ? '账号空间请使用指定记录的删除操作。清空本机缓存或替换整个账号空间会影响同步基线，当前暂不开放；游客模式仍可清空。' : '删除此游客空间的业务记录与本地队列，并保留一个恢复快照。不会操作其他来源的数据。'}</p>
+          <p>
+            {cloud.user
+              ? '账号空间请使用指定记录的删除操作。清空本机缓存或替换整个账号空间会影响同步基线，当前暂不开放；游客模式仍可清空。'
+              : '删除此游客空间的业务记录与本地队列，并保留一个恢复快照。不会操作其他来源的数据。'}
+          </p>
         </div>
         <button
           className="button danger-button"
@@ -311,7 +311,9 @@ export default function SettingsPage() {
             恢复方式
             <select value={mode} onChange={(e) => setMode(e.target.value as typeof mode)}>
               <option value="merge">合并：保留原记录，不同内容创建副本</option>
-              <option value="replace" disabled={!!cloud.user}>替换：用备份替换当前游客空间的记录</option>
+              <option value="replace" disabled={!!cloud.user}>
+                替换：用备份替换当前游客空间的记录
+              </option>
             </select>
           </label>
           <p className="small muted">
@@ -378,7 +380,9 @@ export default function SettingsPage() {
                 return;
               }
               setClearing(true);
-              if (await perform(() => dataService.clear(), '当前记录已清空，恢复快照仍保留在本机。'))
+              if (
+                await perform(() => dataService.clear(), '当前记录已清空，恢复快照仍保留在本机。')
+              )
                 setDanger(false);
               setClearing(false);
             }}

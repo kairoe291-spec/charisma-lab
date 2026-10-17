@@ -1,12 +1,14 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, CheckCircle2, Clock, Search } from 'lucide-react';
-import { modules, lessons } from '../../content';
+import { getModules, getLessons, learningStages } from '../../content';
 import { useLearningService } from '../../hooks/useFeatureServices';
 import { useServiceQuery } from '../../hooks/useServiceQuery';
 import type { CourseProgress as Progress } from '../../types';
 import { Card, PageHeading, Tag } from '../../shared/ui';
 import { useState } from 'react';
 export function LearningCatalog() {
+  const modules = getModules();
+  const publishedModules = modules.filter((module) => getLessons(module.id).length > 0);
   const learningService = useLearningService();
   const [params] = useSearchParams();
   const [filter, setFilter] = useState(params.get('module') ?? 'all');
@@ -20,11 +22,11 @@ export function LearningCatalog() {
         description="十二个能力维度，一套循序渐进的学习方法。把理解变成生活里的行动。"
       />
       <div className="method-strip">
-        {['认识概念', '分析案例', '场景模拟', '现实训练', '测试复盘'].map((t, i) => (
-          <span key={t}>
+        {learningStages.map((stage, i) => (
+          <span key={stage.label}>
             <b>0{i + 1}</b>
-            {t}
-            {i < 4 && <ArrowRight size={14} />}
+            {stage.catalogLabel}
+            {i < learningStages.length - 1 && <ArrowRight size={14} />}
           </span>
         ))}
       </div>
@@ -33,9 +35,15 @@ export function LearningCatalog() {
           <button className={filter === 'all' ? 'selected' : ''} onClick={() => setFilter('all')}>
             所有维度
           </button>
-          <button className={filter === 'M04' ? 'selected' : ''} onClick={() => setFilter('M04')}>
-            正式课程 · M04
-          </button>
+          {publishedModules.map((module) => (
+            <button
+              key={module.id}
+              className={filter === module.id ? 'selected' : ''}
+              onClick={() => setFilter(module.id)}
+            >
+              正式课程 · {module.id}
+            </button>
+          ))}
         </div>
         <label className="inline-search">
           <Search size={16} />
@@ -55,7 +63,7 @@ export function LearningCatalog() {
               (!search || [m.title, ...m.topics, ...m.plannedLessons].join('').includes(search)),
           )
           .map((m) => {
-            const formal = lessons.filter((l) => l.moduleId === m.id);
+            const formal = getLessons(m.id);
             return (
               <Card key={m.id} className="academy-module">
                 <div className="module-heading">

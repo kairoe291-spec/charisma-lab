@@ -1,8 +1,64 @@
 import { describe, expect, it } from 'vitest';
-import { lessons, modules, scenarios, selfAssessmentQuestions, trainings } from '../content';
+import {
+  getLesson,
+  getLessons,
+  getModules,
+  getQuestions,
+  getScenarios,
+  getTasks,
+  growthPlan,
+  learningStages,
+  lessons,
+  modules,
+  scenarios,
+  selfAssessmentQuestions,
+  trainings,
+} from '../content';
 import { MODULE_IDS } from '../domain/validation';
 
 describe('curriculum integrity', () => {
+  it('assembles existing lessons and questions by stable IDs through the content loader', () => {
+    expect(getModules()).toEqual(modules);
+    expect(getLessons()).toEqual(lessons);
+    expect(getLessons('M04').map((lesson) => lesson.id)).toEqual(['M04-L01', 'M04-L02', 'M04-L03']);
+    expect(getLessons('M01')).toEqual([]);
+    expect(getLesson('M04-L01')?.quiz.map((question) => question.id)).toEqual([
+      'M04-Q01',
+      'M04-Q02',
+      'M04-Q03',
+    ]);
+    expect(getLesson('M04-L02')?.quiz.map((question) => question.id)).toEqual([
+      'M04-Q04',
+      'M04-Q05',
+      'M04-Q06',
+    ]);
+    expect(getLesson('M04-L03')?.quiz.map((question) => question.id)).toEqual([
+      'M04-Q07',
+      'M04-Q08',
+      'M04-Q09',
+    ]);
+    expect(getLesson('missing')).toBeUndefined();
+    expect(getQuestions()).toHaveLength(9);
+    expect(getQuestions('M04-L01')).toHaveLength(3);
+    expect(getQuestions().every((question) => getLesson(question.lessonId))).toBe(true);
+    expect(getTasks('M04')).toEqual(trainings);
+    expect(getScenarios('M04')).toEqual(scenarios);
+    expect(getTasks('M01')).toEqual([]);
+    expect(learningStages.map((stage) => stage.label)).toEqual([
+      '认识概念',
+      '案例解析',
+      '场景模拟',
+      '现实训练',
+      '测试与复盘',
+    ]);
+    expect(growthPlan.map((phase) => phase.day)).toEqual([
+      'DAY 01—07',
+      'DAY 08—30',
+      'DAY 31—60',
+      'DAY 61—90',
+    ]);
+  });
+
   it('has twelve distinct module directories, without pretending planned courses are published', () => {
     expect(modules).toHaveLength(12);
     expect(new Set(modules.map((module) => module.id)).size).toBe(12);

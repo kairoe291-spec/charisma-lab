@@ -244,7 +244,7 @@ export default function App() {
           </div>
           <Link to="/settings" className="status-private" title="查看数据保存位置">
             <ShieldCheck size={17} />
-            <span>{cloud.user ? sync.running ? '正在同步' : '账号空间' : '本地模式'}</span>
+            <span>{cloud.user ? (sync.running ? '正在同步' : '账号空间') : '本地模式'}</span>
           </Link>
           <button className="top-avatar" onClick={() => setSetup(true)} aria-label="编辑我的计划">
             {profile?.name.slice(0, 1) ?? '我'}
@@ -252,10 +252,13 @@ export default function App() {
         </header>
         <div className="status-strip">
           <span>
-            <i className="status-dot" /> IndexedDB 本机存储 · {sync.pending} 项{cloud.user ? '修改等待同步' : '本地变更'}
+            <i className="status-dot" /> IndexedDB 本机存储 · {sync.pending} 项
+            {cloud.user ? '修改等待同步' : '本地变更'}
           </span>
           <span>
-            {cloud.user ? `${sync.conflicts ? `发现 ${sync.conflicts} 份不同版本` : sync.error ? '同步遇到问题，本地数据仍保留' : sync.running ? '正在同步云端' : sync.lastSuccessAt && !sync.pending ? '云端同步完成' : '等待云端同步'} · 最后同步：${sync.lastSuccessAt ? new Date(sync.lastSuccessAt).toLocaleString('zh-CN') : '无'}` : '当前为本地模式，数据仅保存在此设备浏览器中。'}{' '}
+            {cloud.user
+              ? `${sync.conflicts ? `发现 ${sync.conflicts} 份不同版本` : sync.error ? '同步遇到问题，本地数据仍保留' : sync.running ? '正在同步云端' : sync.lastSuccessAt && !sync.pending ? '云端同步完成' : '等待云端同步'} · 最后同步：${sync.lastSuccessAt ? new Date(sync.lastSuccessAt).toLocaleString('zh-CN') : '无'}`
+              : '当前为本地模式，数据仅保存在此设备浏览器中。'}{' '}
             <Link to="/settings">
               <CircleHelp size={13} />
             </Link>

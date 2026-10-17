@@ -1,22 +1,20 @@
-import { trainings } from '../../content';
+import { customTaskDefaults, getTasks } from '../../content';
 import type { EntityRepository } from '../../data/repositories/contracts';
 import type { BusinessRecord, RecordPayloads, Training, TrainingRecord } from '../../types';
 
 export function getTrainingTasks(tasks: BusinessRecord<'trainingTask'>[]): Training[] {
   return [
-    ...trainings,
+    ...getTasks(),
     ...tasks.map((t) => ({
       id: t.id,
-      ...(t.payload as {
-        title: string;
-        minutes: 5 | 15 | 30;
-        moduleId: string;
-        description: string;
-      }),
-      difficulty: '自主练习',
-      steps: ['在合适的环境中进行练习。', '完成后记录真实体验与下一次的调整。'],
+      ...t.payload,
+      ...customTaskDefaults,
     })),
   ];
+}
+
+export function availableTrainingDurations(tasks: Training[]): number[] {
+  return [...new Set(tasks.map((task) => task.minutes))].sort((a, b) => a - b);
 }
 
 export function saveCompletedTraining(
@@ -45,7 +43,8 @@ export function createTrainingService(
     createTask: (payload: RecordPayloads['trainingTask']) => tasks.save(payload),
     record: (task: Training, entry: Pick<TrainingRecord, 'date' | 'difficulty' | 'reflection'>) =>
       saveCompletedTraining(records, task, entry),
-    updateRecord: (id: string, payload: RecordPayloads['trainingRecord']) => records.save(payload, id),
+    updateRecord: (id: string, payload: RecordPayloads['trainingRecord']) =>
+      records.save(payload, id),
     removeRecord: (id: string) => records.remove(id),
   };
 }

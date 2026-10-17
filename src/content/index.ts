@@ -1,6 +1,33 @@
-export type { Module, QuizQuestion, Lesson, Training, Scenario } from './types';
-export { modules } from './modules';
-export { lessons } from './lessons';
-export { trainings } from './trainings';
-export { scenarios } from './scenarios';
-export { selfAssessmentQuestions, selfAssessmentGuidance } from './assessments';
+export type {
+  Module,
+  Question,
+  QuizQuestion,
+  LessonContent,
+  Lesson,
+  Task,
+  PublishedTask,
+  Training,
+  Scenario,
+} from './types';
+export {
+  getModules,
+  getModule,
+  getLessons,
+  getLesson,
+  getQuestions,
+  getTasks,
+  getScenarios,
+  modules,
+  lessons,
+  trainings,
+  scenarios,
+  questions,
+} from './loader';
+export { learningStages } from './learning';
+export { growthPlan } from './growth';
+export {
+  selfAssessmentQuestions,
+  selfAssessmentGuidance,
+  selfAssessmentScale,
+} from './assessments';
+export { customTaskDefaults, trainingDurations } from './trainings';

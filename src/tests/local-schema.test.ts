@@ -18,9 +18,21 @@ it('opens an existing v1 IndexedDB without changing its stores or private record
   const id = crypto.randomUUID();
   const time = new Date().toISOString();
   await legacy.table('records').add({
-    id, ownerScope: 'guest', kind: 'journalEntry',
-    payload: { title: '旧版记录', body: '继续保留', tags: [], category: '每日成长', date: '2026-10-17' },
-    createdAt: time, updatedAt: time, serverVersion: 0, localRevision: 1, syncStatus: 'local',
+    id,
+    ownerScope: 'guest',
+    kind: 'journalEntry',
+    payload: {
+      title: '旧版记录',
+      body: '继续保留',
+      tags: [],
+      category: '每日成长',
+      date: '2026-10-17',
+    },
+    createdAt: time,
+    updatedAt: time,
+    serverVersion: 0,
+    localRevision: 1,
+    syncStatus: 'local',
   });
   legacy.close();
 
@@ -29,9 +41,9 @@ it('opens an existing v1 IndexedDB without changing its stores or private record
     const journal = await new Repository(database).get(id);
     expect(journal?.kind === 'journalEntry' && journal.payload.body).toBe('继续保留');
     expect(database.verno).toBe(1);
-    expect(database.tables.map((table) => table.name).sort()).toEqual([
-      'records', 'outbox', 'syncMetadata', 'conflicts', 'safetyBackups',
-    ].sort());
+    expect(database.tables.map((table) => table.name).sort()).toEqual(
+      ['records', 'outbox', 'syncMetadata', 'conflicts', 'safetyBackups'].sort(),
+    );
   } finally {
     await database.delete();
   }

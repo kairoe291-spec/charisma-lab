@@ -1,2 +1,12 @@
 // Compatibility path for the existing static teaching data.
-export type { Module, QuizQuestion, Lesson, Training, Scenario } from '../types/content';
+export type {
+  Module,
+  Question,
+  QuizQuestion,
+  LessonContent,
+  Lesson,
+  Task,
+  PublishedTask,
+  Training,
+  Scenario,
+} from '../types/content';

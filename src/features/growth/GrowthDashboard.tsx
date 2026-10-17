@@ -112,7 +112,7 @@ export function GrowthDashboard({ profile, percent }: { profile?: Profile; perce
               <BookOpen size={17} />
             </span>
             <div>
-              <strong>学习一节表达课程</strong>
+              <strong>学习一节课程</strong>
               <span>
                 {next.title} · {next.minutes} 分钟
               </span>

@@ -19,10 +19,11 @@ export function useJournalService() {
 export function useTrainingService() {
   const repository = useRepository();
   return useMemo(
-    () => createTrainingService(
-      localEntityRepository(repository, 'trainingRecord'),
-      localEntityRepository(repository, 'trainingTask'),
-    ),
+    () =>
+      createTrainingService(
+        localEntityRepository(repository, 'trainingRecord'),
+        localEntityRepository(repository, 'trainingTask'),
+      ),
     [repository],
   );
 }
@@ -30,10 +31,11 @@ export function useTrainingService() {
 export function useLearningService() {
   const repository = useRepository();
   return useMemo(
-    () => createLearningService(
-      localEntityRepository(repository, 'courseProgress'),
-      localEntityRepository(repository, 'lessonNote'),
-    ),
+    () =>
+      createLearningService(
+        localEntityRepository(repository, 'courseProgress'),
+        localEntityRepository(repository, 'lessonNote'),
+      ),
     [repository],
   );
 }
@@ -41,19 +43,23 @@ export function useLearningService() {
 export function useProfileService() {
   const repository = useRepository();
   return useMemo(
-    () => createProfileService(
-      localEntityRepository(repository, 'profile'),
-      localEntityRepository(repository, 'userInterest'),
-      localEntityRepository(repository, 'growthGoal'),
-      localEntityRepository(repository, 'journalEntry'),
-    ),
+    () =>
+      createProfileService(
+        localEntityRepository(repository, 'profile'),
+        localEntityRepository(repository, 'userInterest'),
+        localEntityRepository(repository, 'growthGoal'),
+        localEntityRepository(repository, 'journalEntry'),
+      ),
     [repository],
   );
 }
 
 export function useAssessmentService() {
   const repository = useRepository();
-  return useMemo(() => createAssessmentService(localAssessmentRepository(repository)), [repository]);
+  return useMemo(
+    () => createAssessmentService(localAssessmentRepository(repository)),
+    [repository],
+  );
 }
 
 export function useScenarioService() {
@@ -67,9 +73,7 @@ export function useScenarioService() {
 export function useDataManagementService() {
   const repository = useRepository();
   return useMemo(
-    () => createDataManagementService(
-      repository, localEntityRepository(repository, 'appSettings'),
-    ),
+    () => createDataManagementService(repository, localEntityRepository(repository, 'appSettings')),
     [repository],
   );
 }

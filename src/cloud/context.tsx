@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { CloudController, type CloudState } from './controller';
 import type { CloudConfig } from './config';
 
@@ -13,8 +20,23 @@ const Context = createContext<CloudContextValue | null>(null);
 export function CloudProvider({ children }: { children: ReactNode }) {
   const [controller] = useState(() => new CloudController());
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
-  useEffect(() => { void controller.initialize(); return controller.dispose; }, [controller]);
-  return <Context.Provider value={{ ...state, configure: controller.configure, sendOtp: controller.sendOtp, verifyOtp: controller.verifyOtp, signOut: controller.signOut }}>{children}</Context.Provider>;
+  useEffect(() => {
+    void controller.initialize();
+    return controller.dispose;
+  }, [controller]);
+  return (
+    <Context.Provider
+      value={{
+        ...state,
+        configure: controller.configure,
+        sendOtp: controller.sendOtp,
+        verifyOtp: controller.verifyOtp,
+        signOut: controller.signOut,
+      }}
+    >
+      {children}
+    </Context.Provider>
+  );
 }
 export function useCloud(): CloudContextValue {
   const value = useContext(Context);

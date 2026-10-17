@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useCloud } from '../cloud/context';
 import { SupabaseTransport } from '../cloud/transport';
 import { useSyncLocalStatus } from '../hooks/useSyncLocalStatus';
@@ -7,7 +15,14 @@ import type { SyncState } from '../sync/protocol';
 import { flushAllSaves } from './saveCoordinator';
 
 const empty: SyncState = { running: false, pending: 0, conflicts: 0, authRequired: false };
-const Context = createContext({ ...empty, runSync: async () => {} });
+const Context = createContext<
+  SyncState & { runSync: (options?: { skipFlush?: boolean }) => Promise<void> }
+>({
+  ...empty,
+  runSync: async () => {},
+});
+const syncErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : '同步遇到问题，本地数据仍然保留。';
 
 export function SyncProvider({ children }: { children: ReactNode }) {
   const cloud = useCloud();
@@ -19,12 +34,31 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     if (!cloud.client || !userId) return;
     let current = true;
     const isCurrent = () => current;
-    const transport = new SupabaseTransport(cloud.client, { userId, scope: cloud.scope, isCurrent });
-    const instance = new SyncEngine({ transport, scope: cloud.scope, userId, isCurrent, onState: next => { if (current) setState(next); } });
+    const transport = new SupabaseTransport(cloud.client, {
+      userId,
+      scope: cloud.scope,
+      isCurrent,
+    });
+    const instance = new SyncEngine({
+      transport,
+      scope: cloud.scope,
+      userId,
+      isCurrent,
+      onState: (next) => {
+        if (current) setState(next);
+      },
+    });
     engine.current = instance;
     const trigger = () => {
       if (!navigator.onLine || document.visibilityState === 'hidden') return;
-      void instance.run().catch(error => { if (current) setState(s => ({ ...s, running: false, error: error instanceof Error ? error.message : '同步遇到问题，本地数据仍然保留。' })); });
+      void instance.run().catch((error) => {
+        if (current)
+          setState((s) => ({
+            ...s,
+            running: false,
+            error: syncErrorMessage(error),
+          }));
+      });
     };
     trigger();
     addEventListener('online', trigger);
@@ -42,19 +76,42 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     };
   }, [cloud.client, cloud.scope, cloud.sessionEpoch, userId]);
   // Debounce committed local changes; retries remain scheduled by the persisted queue.
-  const fingerprint = queue.map(q => `${q.mutationId}:${q.localRevision}:${q.status}`).join('|');
+  const fingerprint = queue.map((q) => `${q.mutationId}:${q.localRevision}:${q.status}`).join('|');
   useEffect(() => {
     if (!userId || !navigator.onLine) return;
-    const timer = setTimeout(() => { void engine.current?.run().catch(() => {}); }, 500);
+    const timer = setTimeout(() => {
+      const instance = engine.current;
+      void instance?.run().catch((error) => {
+        if (engine.current === instance)
+          setState((current) => ({ ...current, running: false, error: syncErrorMessage(error) }));
+      });
+    }, 500);
     return () => clearTimeout(timer);
   }, [fingerprint, userId]);
-  const runSync = useCallback(async () => {
-    if (!(await flushAllSaves())) throw new Error('还有未保存的编辑，请先重试本机保存。');
+  // A tracked UI action must flush before it starts; otherwise it would await itself.
+  const runSync = useCallback(async ({ skipFlush = false }: { skipFlush?: boolean } = {}) => {
+    if (!skipFlush && !(await flushAllSaves()))
+      throw new Error('还有未保存的编辑，请先重试本机保存。');
     if (!navigator.onLine) throw new Error('当前离线，记录保留在本机，联网后会重试。');
     const result = await engine.current?.run({ force: true });
     if (result?.error) throw new Error(result.error);
   }, []);
-  return <Context.Provider value={{ ...state, pending: queue.length, conflicts, lastSuccessAt: metadata?.lastSuccessAt ?? state.lastSuccessAt, error: metadata?.lastError || state.error, runSync }}>{children}</Context.Provider>;
+  return (
+    <Context.Provider
+      value={{
+        ...state,
+        pending: queue.length,
+        conflicts,
+        lastSuccessAt: metadata?.lastSuccessAt ?? state.lastSuccessAt,
+        error: metadata?.lastError || state.error,
+        runSync,
+      }}
+    >
+      {children}
+    </Context.Provider>
+  );
 }
 
-export function useSync() { return useContext(Context); }
+export function useSync() {
+  return useContext(Context);
+}

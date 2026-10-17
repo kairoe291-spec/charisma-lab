@@ -26,11 +26,12 @@ export function createJournalEntry(repository: EntityRepository<'journalEntry'>)
   });
 }
 
-export function saveJournalEntry(repository: EntityRepository<'journalEntry'>, id: string, entry: JournalEntry) {
-  return repository.save(
-    { ...entry, title: entry.title.trim() || '未命名日志' },
-    id,
-  );
+export function saveJournalEntry(
+  repository: EntityRepository<'journalEntry'>,
+  id: string,
+  entry: JournalEntry,
+) {
+  return repository.save({ ...entry, title: entry.title.trim() || '未命名日志' }, id);
 }
 
 export function createJournalService(repository: EntityRepository<'journalEntry'>) {

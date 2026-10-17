@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { ArrowRight, MessagesSquare, RotateCcw } from 'lucide-react';
-import { scenarios } from '../../content';
+import { getModule, getScenarios } from '../../content';
 import type { Scenario } from '../../types';
 import { useScenarioService } from '../../hooks/useFeatureServices';
 import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
 import { Card, PageHeading, Tag, SectionTitle } from '../../shared/ui';
 export function ScenarioPractice() {
+  const scenarios = getScenarios();
   const scenarioService = useScenarioService();
   const [active, setActive] = useState<Scenario | null>(null);
   const history = useServiceQuery(() => scenarioService.listAttempts(), scenarioService);
@@ -27,7 +28,9 @@ export function ScenarioPractice() {
                 <MessagesSquare size={45} />
                 <span>SCENARIO 0{i + 1}</span>
               </div>
-              <Tag>M04 · 表达练习</Tag>
+              <Tag>
+                {s.moduleId} · {getModule(s.moduleId)?.shortTitle ?? '情景练习'}
+              </Tag>
               <h2>{s.title}</h2>
               <p>{s.background}</p>
               <button className="button" onClick={() => setActive(s)}>

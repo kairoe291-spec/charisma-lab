@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Compass, Target } from 'lucide-react';
-import { modules, selfAssessmentQuestions, selfAssessmentGuidance } from '../../content';
+import {
+  growthPlan,
+  modules,
+  selfAssessmentQuestions,
+  selfAssessmentGuidance,
+  selfAssessmentScale,
+} from '../../content';
 import { useAssessmentService } from '../../hooks/useFeatureServices';
 import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useRecords } from '../../hooks/useRecords';
@@ -71,7 +77,7 @@ export function AssessmentWorkspace() {
                   {index + 1}. {q.question}
                 </legend>
                 <div className="scale-options">
-                  {['几乎没有', '偶尔', '有时', '经常', '持续做到'].map((label, j) => (
+                  {selfAssessmentScale.map((label, j) => (
                     <label className={answers[index] === j + 1 ? 'selected' : ''} key={label}>
                       <input
                         type="radio"
@@ -169,20 +175,7 @@ export function AssessmentWorkspace() {
       </Card>
       <SectionTitle title="你的 90 天建议路线" />
       <div className="plan-grid">
-        {[
-          { day: 'DAY 01—07', title: '认识自己', body: '观察现有习惯，完成自评，选三个关注维度。' },
-          {
-            day: 'DAY 08—30',
-            title: '外在与表达',
-            body: '探索舒适风格，练习从容表达与有分寸的幽默。',
-          },
-          { day: 'DAY 31—60', title: '向内扎根', body: '拓展知识，练习共情、心理韧性与现实能力。' },
-          {
-            day: 'DAY 61—90',
-            title: '联结与整合',
-            body: '尊重双向意愿，练习深度交流，发展生活兴趣。',
-          },
-        ].map((p) => (
+        {growthPlan.map((p) => (
           <Card key={p.day}>
             <span className="eyebrow">{p.day}</span>
             <h3>{p.title}</h3>

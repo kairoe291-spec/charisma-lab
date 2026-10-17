@@ -27,6 +27,29 @@ afterEach(async () => {
 });
 
 describe('local-first repository', () => {
+  it('propagates an IndexedDB read failure and preserves the stored record', async () => {
+    const saved = await repository.save('journalEntry', journal());
+    vi.spyOn(database.records, 'get').mockRejectedValueOnce(
+      new DOMException('Database temporarily unavailable', 'InvalidStateError'),
+    );
+    await expect(repository.get(saved.id)).rejects.toMatchObject({ name: 'InvalidStateError' });
+    expect(await repository.get(saved.id)).toEqual(saved);
+  });
+
+  it('rejects a damaged import receipt before changing account records', async () => {
+    const source = await repository.save('journalEntry', journal());
+    const backup = await repository.exportBackup();
+    const account = new Repository(database, 'user:a');
+    await database.syncMetadata.put({
+      ownerScope: 'user:a',
+      key: `backupImport:guest:${source.id}:${source.localRevision}`,
+      value: '{}',
+    });
+    await expect(account.importBackup(backup, 'merge')).rejects.toThrow('备份导入标记损坏');
+    expect(await account.list()).toHaveLength(0);
+    expect(await repository.get(source.id)).toEqual(source);
+  });
+
   it('persists edits after closing and reopening IndexedDB, coalescing never-sent mutations', async () => {
     const created = await repository.save('journalEntry', journal());
     const firstMutation = await database.outbox.toArray();
@@ -362,12 +385,15 @@ describe('backup safety', () => {
     const firstBackup = await repository.exportBackup();
     await repository.save(kind, current[kind], original.id);
     await repository.importBackup(firstBackup, 'merge');
-    const copy = (await repository.list(kind)).find((record) => record.importedCopyOf === original.id)!;
+    const copy = (await repository.list(kind)).find(
+      (record) => record.importedCopyOf === original.id,
+    )!;
     const accountRecord = await repository.save(kind, before[kind], original.id, 'user:a');
     const backup = await repository.exportBackup();
     const primarySource = backup.records.find((record) => record.id === original.id)!;
     const copySource = backup.records.find((record) => record.id === copy.id)!;
-    backup.records = order === 'primary-first' ? [primarySource, copySource] : [copySource, primarySource];
+    backup.records =
+      order === 'primary-first' ? [primarySource, copySource] : [copySource, primarySource];
 
     const result = await repository.importBackup(backup, 'replace');
 

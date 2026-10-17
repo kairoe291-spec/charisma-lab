@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { ArrowUpRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 export function Tag({ children, color = '' }: { children: ReactNode; color?: string }) {
@@ -84,13 +84,14 @@ export function Dialog({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     ref.current?.showModal();
   }, []);
   return (
-    <dialog ref={ref} onCancel={onClose} className="dialog">
+    <dialog ref={ref} aria-labelledby={titleId} onCancel={onClose} className="dialog">
       <div className="dialog-heading">
-        <h2>{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button onClick={onClose} aria-label="关闭对话框">
           <X size={20} />
         </button>

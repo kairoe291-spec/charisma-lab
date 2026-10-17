@@ -1,17 +1,73 @@
 @import 'tailwindcss';
-.cloud-form { display: grid; gap: 14px; margin-top: 18px; }
-.cloud-form label { display: grid; gap: 6px; }
-.cloud-form input { width: 100%; min-width: 0; }
-.cloud-summary { display: flex; align-items: flex-start; gap: 14px; }
-.cloud-summary > svg { flex-shrink: 0; margin-top: 6px; }
-.cloud-summary p, .cloud-error { overflow-wrap: anywhere; }
-.cloud-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 18px 0; }
-.cloud-error { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-alt); }
-.cloud-delete { margin-bottom: 12px; }
-.conflict-panel { margin: 24px 0; }
-.conflict-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.conflict-columns pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 12px; padding: 12px; max-height: 320px; overflow-y: auto; }
-@media (max-width: 600px) { .conflict-columns { grid-template-columns: 1fr; } .cloud-actions .button { width: 100%; } }
+.cloud-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+.cloud-form label {
+  display: grid;
+  gap: 6px;
+}
+.cloud-form input {
+  width: 100%;
+  min-width: 0;
+}
+.cloud-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.cloud-summary > svg {
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.cloud-summary p,
+.cloud-error {
+  overflow-wrap: anywhere;
+}
+.cloud-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 18px 0;
+}
+.cloud-error {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-alt);
+}
+.cloud-delete {
+  margin-bottom: 12px;
+}
+.conflict-panel {
+  margin: 24px 0;
+}
+.conflict-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.conflict-columns pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+@media (max-width: 600px) {
+  .conflict-columns {
+    grid-template-columns: 1fr;
+  }
+  .cloud-actions .button {
+    width: 100%;
+  }
+}
 :root {
   font-family: Inter, 'Segoe UI', 'Microsoft YaHei', sans-serif;
   color: #283b32;

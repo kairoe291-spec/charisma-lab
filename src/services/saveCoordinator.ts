@@ -17,6 +17,18 @@ function emit(group: SaveGroup, state: string) {
   group.listeners.forEach((listener) => listener(state));
   listeners.forEach((listener) => listener());
 }
+
+function saveFailureMessage(error: unknown): string {
+  const name =
+    error !== null && typeof error === 'object' && 'name' in error && typeof error.name === 'string'
+      ? error.name
+      : '';
+  if (name === 'QuotaExceededError')
+    return '本机存储空间不足，修改尚未保存。请导出备份并腾出空间后重试保存。';
+  if (name === 'SecurityError' || name === 'InvalidStateError')
+    return '无法访问本机数据库，修改尚未保存。请检查浏览器存储权限后重试保存。';
+  return '保存失败，请点击重试保存';
+}
 function drain(group: SaveGroup): Promise<void> {
   if (group.running) return group.running;
   if (!group.jobs.length) return Promise.resolve();
@@ -28,10 +40,10 @@ function drain(group: SaveGroup): Promise<void> {
       try {
         await job.task();
         group.jobs.shift();
-      } catch {
+      } catch (error) {
         group.failed = true;
         group.running = null;
-        emit(group, '保存失败，请点击重试保存');
+        emit(group, saveFailureMessage(error));
         job.complete(false);
         return;
       }

@@ -1,6 +1,17 @@
-import type { Training } from './types';
+import type { PublishedTask } from './types';
 
-export const trainings: Training[] = [
+export const customTaskDefaults = {
+  difficulty: '自主练习',
+  steps: ['在合适的环境中进行练习。', '完成后记录真实体验与下一次的调整。'],
+};
+
+export const trainingDurations = [
+  { minutes: 5, label: '轻量开始' },
+  { minutes: 15, label: '标准练习' },
+  { minutes: 30, label: '深度探索' },
+] as const;
+
+export const trainings: PublishedTask[] = [
   {
     id: 'M04-T01',
     moduleId: 'M04',

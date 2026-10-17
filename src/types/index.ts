@@ -1,7 +1,17 @@
 /** UI-facing aliases of existing persisted payloads; no new storage model. */
 import type { RecordPayloads } from '../domain/types';
 export type { BusinessRecord, RecordKind, RecordPayloads } from '../domain/types';
-export type { Module, QuizQuestion, Lesson, Training, Scenario } from './content';
+export type {
+  Module,
+  Question,
+  QuizQuestion,
+  LessonContent,
+  Lesson,
+  Task,
+  PublishedTask,
+  Training,
+  Scenario,
+} from './content';
 export type UserProfile = RecordPayloads['profile'];
 export type CourseProgress = RecordPayloads['courseProgress'];
 export type LessonNote = RecordPayloads['lessonNote'];

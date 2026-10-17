@@ -27,6 +27,20 @@ function deferred() {
 }
 
 describe('save feedback and serialization', () => {
+  it('explains a storage quota failure and keeps the edit available to retry', async () => {
+    const group = createSaveGroup();
+    const save = vi
+      .fn()
+      .mockRejectedValueOnce(new DOMException('Quota reached', 'QuotaExceededError'))
+      .mockResolvedValue(undefined);
+    expect(await enqueueSave(group, save)).toBe(false);
+    expect(group.state).toContain('本机存储空间不足');
+    expect(hasUnsavedChanges()).toBe(true);
+    expect(await flushAllSaves()).toBe(true);
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(group.state).toBe('已保存到本机');
+  });
+
   it('protects an explicit delete/form transaction until it commits', async () => {
     const pending = deferred();
     const operation = trackOperation(() => pending.promise);

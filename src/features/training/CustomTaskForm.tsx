@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { modules } from '../../content';
+import { getModules, getTasks, trainingDurations } from '../../content';
 import { useTrainingService } from '../../hooks/useFeatureServices';
 import { useFeedback } from '../../shared/feedback';
 import { Dialog } from '../../shared/ui';
 
 export function CustomTaskForm({ onClose }: { onClose: () => void }) {
+  const modules = getModules();
   const trainingService = useTrainingService();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [minutes, setMinutes] = useState(5);
-  const [moduleId, setModule] = useState('M04');
+  const [moduleId, setModule] = useState(getTasks()[0]?.moduleId ?? modules[0]?.id ?? '');
   const { perform } = useFeedback();
   const [saving, setSaving] = useState(false);
   return (
@@ -49,9 +50,9 @@ export function CustomTaskForm({ onClose }: { onClose: () => void }) {
           <label>
             训练时长
             <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
-              {[5, 15, 30].map((n) => (
-                <option key={n} value={n}>
-                  {n} 分钟
+              {trainingDurations.map(({ minutes: duration }) => (
+                <option key={duration} value={duration}>
+                  {duration} 分钟
                 </option>
               ))}
             </select>

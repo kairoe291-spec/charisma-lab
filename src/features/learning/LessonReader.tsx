@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Bookmark, CheckCircle2, Clock } from 'lucide-react';
-import { lessons, scenarios } from '../../content';
+import { getLesson, getModule, getScenarios, learningStages } from '../../content';
 import { useLearningService } from '../../hooks/useFeatureServices';
 import { useServiceQuery } from '../../hooks/useServiceQuery';
 import { useSaveQueue } from '../../hooks/useSaveQueue';
@@ -9,10 +9,9 @@ import { useFeedback } from '../../shared/feedback';
 import type { CourseProgress as Progress, LessonNote as Note } from '../../types';
 import { Card, Tag } from '../../shared/ui';
 import { flushAllSaves, hasUnsavedChanges } from '../../services/saveCoordinator';
-const stages = ['认识概念', '案例解析', '场景模拟', '现实训练', '测试与复盘'];
 export function LessonReader() {
   const { lessonId } = useParams();
-  const lesson = lessons.find((l) => l.id === lessonId);
+  const lesson = getLesson(lessonId ?? '');
   return lesson ? (
     <LessonContent key={lesson.id} lessonId={lesson.id} />
   ) : (
@@ -24,7 +23,8 @@ export function LessonReader() {
 }
 function LessonContent({ lessonId }: { lessonId: string }) {
   const learningService = useLearningService();
-  const lesson = lessons.find((l) => l.id === lessonId)!;
+  const lesson = getLesson(lessonId)!;
+  const module = getModule(lesson.moduleId);
   const progress = useServiceQuery(() => learningService.listProgress(), learningService);
   const notes = useServiceQuery(() => learningService.listNotes(), learningService);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
@@ -63,13 +63,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
     return learningService.saveProgress(lessonId, patch, progressId.current);
   }
   function writeNote(patch: Partial<Note>, toggleBookmark = false) {
-    return learningService.saveNote(
-      lessonId,
-      patch,
-      noteId.current,
-      activeNoteId,
-      toggleBookmark,
-    );
+    return learningService.saveNote(lessonId, patch, noteId.current, activeNoteId, toggleBookmark);
   }
   async function changeStage(n: number) {
     setLocalStage(n);
@@ -83,7 +77,9 @@ function LessonContent({ lessonId }: { lessonId: string }) {
       </Link>
       <div className="lesson-heading">
         <div>
-          <Tag>M04 · 谈吐与高级表达</Tag>
+          <Tag>
+            {lesson.moduleId} · {module?.title ?? lesson.moduleId}
+          </Tag>
           <h1>{lesson.title}</h1>
           <p>{lesson.subtitle}</p>
           <span className="small muted">
@@ -102,22 +98,22 @@ function LessonContent({ lessonId }: { lessonId: string }) {
       <div className="lesson-layout">
         <div>
           <nav className="lesson-tabs" aria-label="课程阶段">
-            {stages.map((s, i) => (
+            {learningStages.map((item, i) => (
               <button
                 className={stage === i ? 'active' : ''}
-                key={s}
+                key={item.label}
                 onClick={() => void changeStage(i)}
               >
                 <span>{i + 1}</span>
-                {s}
+                {item.label}
               </button>
             ))}
           </nav>
           <Card className="lesson-body">
             {stage === 0 && (
               <>
-                <div className="eyebrow">CONCEPT · 认识概念</div>
-                <h2>这节课，你会学到</h2>
+                <div className="eyebrow">{learningStages[0].eyebrow}</div>
+                <h2>{learningStages[0].heading}</h2>
                 <ul className="check-list">
                   {lesson.objectives.map((o) => (
                     <li key={o}>
@@ -144,8 +140,8 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             )}
             {stage === 1 && (
               <>
-                <div className="eyebrow">CASE · 案例解析</div>
-                <h2>在真实生活里，表达有什么不同？</h2>
+                <div className="eyebrow">{learningStages[1].eyebrow}</div>
+                <h2>{learningStages[1].heading}</h2>
                 {lesson.cases.map((c) => (
                   <article key={c.title}>
                     <h3>{c.title}</h3>
@@ -164,26 +160,22 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             )}
             {stage === 2 && (
               <>
-                <div className="eyebrow">SIMULATION · 场景模拟</div>
-                <h2>换一个表达，会发生什么？</h2>
-                <p>
-                  到情景剧场试试不同的回应。每个选项都有反馈与替代表达，没有一套适用于所有人的社交套路。
-                </p>
-                {scenarios
-                  .filter((s) => s.moduleId === lesson.moduleId)
-                  .map((s) => (
-                    <Link key={s.id} className="scenario-short" to="/scenarios">
-                      <strong>{s.title}</strong>
-                      <ArrowUpRightIcon />
-                    </Link>
-                  ))}
-                <p className="muted">练习后返回本课，继续现实训练与复盘。</p>
+                <div className="eyebrow">{learningStages[2].eyebrow}</div>
+                <h2>{learningStages[2].heading}</h2>
+                <p>{learningStages[2].introduction}</p>
+                {getScenarios(lesson.moduleId).map((s) => (
+                  <Link key={s.id} className="scenario-short" to="/scenarios">
+                    <strong>{s.title}</strong>
+                    <ArrowUpRightIcon />
+                  </Link>
+                ))}
+                <p className="muted">{learningStages[2].followUp}</p>
               </>
             )}
             {stage === 3 && (
               <>
-                <div className="eyebrow">PRACTICE · 现实训练</div>
-                <h2>把这一课带到生活里</h2>
+                <div className="eyebrow">{learningStages[3].eyebrow}</div>
+                <h2>{learningStages[3].heading}</h2>
                 <ol className="practice-steps">
                   {lesson.practice.map((p) => (
                     <li key={p}>{p}</li>
@@ -197,8 +189,8 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             )}
             {stage === 4 && (
               <>
-                <div className="eyebrow">REFLECTION · 理解检测</div>
-                <h2>检验理解，也听听自己的感受</h2>
+                <div className="eyebrow">{learningStages[4].eyebrow}</div>
+                <h2>{learningStages[4].heading}</h2>
                 {lesson.quiz.map((q, i) => (
                   <fieldset className="quiz-question" key={q.id}>
                     <legend>
@@ -258,10 +250,12 @@ function LessonContent({ lessonId }: { lessonId: string }) {
               >
                 上一步
               </button>
-              <span>{stage + 1} / 5</span>
+              <span>
+                {stage + 1} / {learningStages.length}
+              </span>
               <button
                 className="button"
-                disabled={stage === 4}
+                disabled={stage === learningStages.length - 1}
                 onClick={() => void changeStage(stage + 1)}
               >
                 下一阶段

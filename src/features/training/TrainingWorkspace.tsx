@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Check, Clock, Plus, Target } from 'lucide-react';
-import { modules } from '../../content';
+import { getModule, trainingDurations } from '../../content';
 import { CustomTaskForm } from './CustomTaskForm';
+import { availableTrainingDurations } from './trainingService';
 import type { Training } from '../../types';
 import { useTrainingService } from '../../hooks/useFeatureServices';
 import { useServiceQuery } from '../../hooks/useServiceQuery';
@@ -23,6 +24,7 @@ export function TrainingWorkspace() {
   const tasks = useServiceQuery(() => trainingService.listTasks(), trainingService);
   const { perform } = useFeedback();
   const allTasks = trainingService.getTasks(tasks);
+  const durations = availableTrainingDurations(allTasks);
   return (
     <>
       <PageHeading
@@ -37,11 +39,18 @@ export function TrainingWorkspace() {
         }
       />
       <div className="duration-options">
-        {[5, 15, 30].map((n, i) => (
-          <button key={n} className={minutes === n ? 'selected' : ''} onClick={() => setMinutes(n)}>
+        {durations.map((duration) => (
+          <button
+            key={duration}
+            className={minutes === duration ? 'selected' : ''}
+            onClick={() => setMinutes(duration)}
+          >
             <Clock size={19} />
-            <strong>{n} 分钟</strong>
-            <span>{['轻量开始', '标准练习', '深度探索'][i]}</span>
+            <strong>{duration} 分钟</strong>
+            <span>
+              {trainingDurations.find((option) => option.minutes === duration)?.label ??
+                '自定义时长'}
+            </span>
           </button>
         ))}
       </div>
@@ -65,8 +74,7 @@ export function TrainingWorkspace() {
               </ol>
               <div className="training-card-footer">
                 <span>
-                  {modules.find((m) => m.id === t.moduleId)?.shortTitle ?? '自主成长'} · {t.minutes}{' '}
-                  分钟
+                  {getModule(t.moduleId)?.shortTitle ?? '自主成长'} · {t.minutes} 分钟
                 </span>
                 <button
                   className="button"
@@ -113,7 +121,10 @@ export function TrainingWorkspace() {
                     className="text-button danger"
                     onClick={() => {
                       if (confirm('删除这条训练记录？此操作会保存删除标记。'))
-                        void perform(() => trainingService.removeRecord(r.id), '已在本机删除训练记录');
+                        void perform(
+                          () => trainingService.removeRecord(r.id),
+                          '已在本机删除训练记录',
+                        );
                     }}
                   >
                     删除记录

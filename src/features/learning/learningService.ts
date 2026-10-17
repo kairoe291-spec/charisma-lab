@@ -10,9 +10,7 @@ export async function saveLessonProgress(
   patch: Partial<CourseProgress>,
   fallbackId: string,
 ) {
-  const saved = (await repository.list()).find(
-    (record) => record.payload.lessonId === lessonId,
-  );
+  const saved = (await repository.list()).find((record) => record.payload.lessonId === lessonId);
   return repository.save(
     { lessonId, stage: 0, completed: false, ...saved?.payload, ...patch },
     saved?.id ?? fallbackId,
@@ -46,8 +44,11 @@ export function createLearningService(
     saveProgress: (lessonId: string, patch: Partial<CourseProgress>, fallbackId: string) =>
       saveLessonProgress(progress, lessonId, patch, fallbackId),
     saveNote: (
-      lessonId: string, patch: Partial<LessonNote>, fallbackId: string,
-      activeNoteId: string | null, toggleBookmark = false,
+      lessonId: string,
+      patch: Partial<LessonNote>,
+      fallbackId: string,
+      activeNoteId: string | null,
+      toggleBookmark = false,
     ) => saveLessonNote(notes, lessonId, patch, fallbackId, activeNoteId, toggleBookmark),
   };
 }

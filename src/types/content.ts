@@ -7,14 +7,16 @@ export interface Module {
   color: string;
   plannedLessons: string[];
 }
-export interface QuizQuestion {
+export interface Question {
   id: string;
+  lessonId: string;
   question: string;
   options: string[];
   answer: number;
   explanation: string;
 }
-export interface Lesson {
+export type QuizQuestion = Omit<Question, 'lessonId'>;
+export interface LessonContent {
   id: string;
   moduleId: string;
   title: string;
@@ -25,17 +27,23 @@ export interface Lesson {
   cases: { title: string; before: string; after: string; analysis: string }[];
   mistakes: string[];
   practice: string[];
+}
+export interface Lesson extends LessonContent {
   quiz: QuizQuestion[];
 }
-export interface Training {
+export interface Task {
   id: string;
   moduleId: string;
   title: string;
-  minutes: 5 | 15 | 30;
+  minutes: number;
   difficulty: string;
   description: string;
   steps: string[];
 }
+export interface PublishedTask extends Task {
+  minutes: 5 | 15 | 30;
+}
+export type Training = Task;
 export interface Scenario {
   id: string;
   moduleId: string;

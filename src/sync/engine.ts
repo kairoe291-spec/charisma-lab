@@ -1,5 +1,5 @@
 import { db, type CharismaDatabase } from '../data/database';
-import type { BusinessRecord, OutboxMutation } from '../domain/types';
+import type { OutboxMutation } from '../domain/types';
 import { fromRemote, type RemoteRecord, type RemoteTransport, type SyncState } from './protocol';
 
 export interface SyncEngineOptions {

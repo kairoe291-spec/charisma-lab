@@ -299,6 +299,7 @@ test('JSON 导出、清空当前记录、预览并恢复完整私人记录', asy
   await clearDialog.getByRole('button', { name: '确认清空', exact: true }).click();
   await expect(clearDialog).not.toBeVisible();
   await expect(page.getByText('本地游客空间 · 0 条可见记录', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '下载快照' })).toHaveCount(1);
   await page.getByLabel('上传 JSON 备份', { exact: true }).setInputFiles(backup.path);
   const importDialog = page.getByRole('dialog');
   await expect(importDialog.getByRole('heading', { name: 'JSON 备份预览' })).toBeVisible();
@@ -306,6 +307,7 @@ test('JSON 导出、清空当前记录、预览并恢复完整私人记录', asy
   page.once('dialog', (dialog) => dialog.accept());
   await importDialog.getByRole('button', { name: '确认恢复', exact: true }).click();
   await expect(importDialog).not.toBeVisible();
+  await expect(page.getByRole('button', { name: '下载快照' })).toHaveCount(2);
   await page.goto(journalUrl);
   await expect(page.getByLabel('日志标题', { exact: true })).toHaveValue('备份恢复验证');
   await expect(page.getByLabel('日志正文', { exact: true })).toHaveValue(
@@ -333,6 +335,140 @@ test('JSON 导出、清空当前记录、预览并恢复完整私人记录', asy
       .map(({ id, kind, payload }) => ({ id, kind, payload }))
       .sort((a, b) => a.id.localeCompare(b.id));
   expect(businessContent(restored.data.records)).toEqual(businessContent(backup.data.records));
+});
+
+test('浏览器 IndexedDB 保存失败时阻止导出、恢复和清空', async ({ page, context }) => {
+  await initialize(page);
+  const journalUrl = await createJournal(page, '故障注入前的日志', '这段正文已保存到本机。');
+  const before = await exportBackup(page);
+  const downloads: string[] = [];
+  const confirmations: string[] = [];
+  page.on('download', (download) => downloads.push(download.suggestedFilename()));
+  page.on('dialog', (dialog) => {
+    confirmations.push(dialog.message());
+    void dialog.dismiss();
+  });
+
+  await page.goto(journalUrl);
+  await page.evaluate(() => {
+    const originalPut = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (this: IDBObjectStore, ...args: unknown[]) {
+      if (this.name === 'records') {
+        throw new DOMException('E2E injected storage failure', 'QuotaExceededError');
+      }
+      return Reflect.apply(originalPut, this, args) as IDBRequest<IDBValidKey>;
+    } as typeof originalPut;
+    Reflect.set(window, '__restoreIndexedDBPutForE2E', () => {
+      IDBObjectStore.prototype.put = originalPut;
+      Reflect.deleteProperty(window, '__restoreIndexedDBPutForE2E');
+    });
+  });
+
+  try {
+    await page.getByLabel('日志正文', { exact: true }).fill('故障期间的修改不能误报为已保存。');
+    await expect(page.locator('.journal-editor .save-state')).toContainText('本机存储空间不足');
+
+    await page.goto('/#/settings');
+    await page.getByRole('button', { name: '一键导出 JSON' }).click();
+    await expect(page.locator('.toast.error')).toContainText('存在尚未保存的编辑');
+    expect(downloads).toHaveLength(0);
+    await page.getByRole('button', { name: '关闭提示' }).click();
+
+    await page.getByLabel('上传 JSON 备份', { exact: true }).setInputFiles(before.path);
+    const importDialog = page.getByRole('dialog');
+    await expect(importDialog.getByRole('heading', { name: 'JSON 备份预览' })).toBeVisible();
+    await importDialog.getByRole('combobox').selectOption('replace');
+    await importDialog.getByRole('button', { name: '确认恢复', exact: true }).click();
+    await expect(page.locator('.toast.error')).toContainText('还有未保存的编辑');
+    await expect(importDialog).toBeVisible();
+    expect(confirmations).toHaveLength(0);
+    await importDialog.getByRole('button', { name: '关闭对话框' }).click();
+    await page.getByRole('button', { name: '关闭提示' }).click();
+
+    await page.getByRole('button', { name: '清空当前记录' }).click();
+    const clearDialog = page.getByRole('dialog');
+    await clearDialog.getByLabel('清空确认文字', { exact: true }).fill('清空');
+    await clearDialog.getByRole('button', { name: '确认清空', exact: true }).click();
+    await expect(page.locator('.toast.error')).toContainText('还有未保存的编辑');
+    await expect(clearDialog).toBeVisible();
+    await expect(page.getByRole('button', { name: '下载快照' })).toHaveCount(0);
+    expect(downloads).toHaveLength(0);
+    expect(confirmations).toHaveLength(0);
+  } finally {
+    if (!page.isClosed()) {
+      await page.evaluate(() => {
+        const restore = Reflect.get(window, '__restoreIndexedDBPutForE2E');
+        if (typeof restore === 'function') restore();
+      });
+    }
+  }
+
+  const reopened = await context.newPage();
+  try {
+    await reopened.goto(journalUrl);
+    await expect(reopened.getByLabel('日志正文', { exact: true })).toHaveValue(
+      '这段正文已保存到本机。',
+    );
+    const after = await exportBackup(reopened);
+    expect(after.data.records).toEqual(before.data.records);
+    await expect(reopened.getByRole('button', { name: '下载快照' })).toHaveCount(0);
+  } finally {
+    await reopened.close();
+  }
+});
+
+test('统计 CSV 下载内容保持原有列顺序、编码与私人日志隔离', async ({ page }) => {
+  await initialize(page);
+  await createJournal(page, '私人日志标题', '绝不能进入普通统计 CSV 的私人正文');
+  await recordTraining(page, '=SUM(1,2)\n他说 "你好"');
+  await completeAssessment(page);
+  await page.goto('/#/settings');
+
+  const trainingDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: '导出训练 CSV' }).click();
+  const trainingDownload = await trainingDownloadPromise;
+  expect(trainingDownload.suggestedFilename()).toMatch(/^训练记录-\d{4}-\d{2}-\d{2}\.csv$/);
+  const trainingPath = await trainingDownload.path();
+  expect(trainingPath).toBeTruthy();
+  const trainingCsv = await readFile(trainingPath!, 'utf8');
+  expect(trainingCsv).toMatch(/^\uFEFF"日期","任务","模块","分钟","难度","心得"\r\n/);
+  expect(trainingCsv).toContain('"M04","5","轻量","\'=SUM(1,2)\n他说 ""你好"""');
+  expect(trainingCsv).not.toContain('绝不能进入普通统计 CSV 的私人正文');
+  expect(trainingCsv).not.toContain('私人日志标题');
+
+  const assessmentDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: '导出自评 CSV' }).click();
+  const assessmentDownload = await assessmentDownloadPromise;
+  expect(assessmentDownload.suggestedFilename()).toMatch(/^阶段自评-\d{4}-\d{2}-\d{2}\.csv$/);
+  const assessmentPath = await assessmentDownload.path();
+  expect(assessmentPath).toBeTruthy();
+  const assessmentCsv = await readFile(assessmentPath!, 'utf8');
+  expect(assessmentCsv).toMatch(/^\uFEFF"时间","类型","维度","分值","量表"\r\n/);
+  expect(assessmentCsv).toContain('"initial-self","M01","3","行为自评 1—5"');
+  expect(assessmentCsv).not.toContain('绝不能进入普通统计 CSV 的私人正文');
+});
+
+test('游客合并恢复保留当前日志并生成备份差异副本', async ({ page }) => {
+  await initialize(page);
+  const journalUrl = await createJournal(page, '合并验证', '备份中的原始内容');
+  const backup = await exportBackup(page);
+  await page.goto(journalUrl);
+  await page.getByLabel('日志正文', { exact: true }).fill('当前设备修改后的内容');
+  await expect(page.locator('.journal-editor .save-state')).toHaveText('已保存到本机');
+  await page.goto('/#/settings');
+  await page.getByLabel('上传 JSON 备份', { exact: true }).setInputFiles(backup.path);
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'JSON 备份预览' })).toBeVisible();
+  await dialog.getByRole('combobox').selectOption('merge');
+  await dialog.getByRole('button', { name: '确认恢复', exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByRole('button', { name: '下载快照' })).toHaveCount(1);
+  const merged = await exportBackup(page);
+  const journals = merged.data.records.filter((record) => record.kind === 'journalEntry');
+  expect(journals).toHaveLength(2);
+  expect(journals.map((record) => (record.payload as { body: string }).body)).toEqual(
+    expect.arrayContaining(['备份中的原始内容', '当前设备修改后的内容']),
+  );
 });
 
 test('手机宽度下课程、训练、日志表单可以操作且页面无横向溢出', async ({ page }, testInfo) => {

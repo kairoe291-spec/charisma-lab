@@ -8,7 +8,8 @@ export function downloadFile(name: string, content: string, type = 'application/
 }
 export function csvCell(value: unknown) {
   let text = String(value ?? '');
-  if (/^[\s]*[=+\-@\t\r]/.test(text)) text = "'" + text;
+  if (!(typeof value === 'number' && Number.isFinite(value)) && /^[\s]*[=+\-@\t\r]/.test(text))
+    text = "'" + text;
   return '"' + text.replaceAll('"', '""') + '"';
 }
 export function exportCsv(name: string, rows: unknown[][]) {

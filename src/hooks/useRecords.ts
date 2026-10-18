@@ -10,3 +10,14 @@ export function useRecords(kind?: RecordKind) {
   const service = useMemo(() => createRecordQueryService(repository), [repository]);
   return useLiveQuery(() => service.list(kind), [kind, service], []);
 }
+
+export function useRecordsState<K extends RecordKind>(
+  kind: K,
+): { data: BusinessRecord<K>[]; loading: boolean };
+export function useRecordsState(): { data: BusinessRecord[]; loading: boolean };
+export function useRecordsState(kind?: RecordKind) {
+  const repository = useRepository();
+  const service = useMemo(() => createRecordQueryService(repository), [repository]);
+  const result = useLiveQuery(() => service.list(kind), [kind, service]);
+  return { data: result ?? [], loading: result === undefined };
+}

@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CharismaDatabase } from '../data/database';
-import { Repository } from '../data/repository';
+import { APP_VERSION, Repository } from '../data/repository';
 import type { Backup, RecordPayloads } from '../domain/types';
 import { MODULE_IDS } from '../domain/validation';
 
@@ -27,6 +27,21 @@ afterEach(async () => {
 });
 
 describe('local-first repository', () => {
+  it('exports the release version and restores a 2.0.0-p1 backup without changing its schema or record ID', async () => {
+    const saved = await repository.save('journalEntry', journal('旧版本备份里的正文'));
+    const legacy = await repository.exportBackup();
+    expect(legacy).toMatchObject({ schemaVersion: 1, appVersion: APP_VERSION });
+    legacy.appVersion = '2.0.0-p1';
+    expect(repository.previewBackup(JSON.stringify(legacy)).appVersion).toBe('2.0.0-p1');
+    await repository.remove(saved.id);
+    const result = await repository.importBackup(legacy, 'replace');
+    expect(result.added).toBe(1);
+    expect(await repository.get(saved.id)).toMatchObject({
+      id: saved.id,
+      ownerScope: 'guest',
+      payload: journal('旧版本备份里的正文'),
+    });
+  });
   it('propagates an IndexedDB read failure and preserves the stored record', async () => {
     const saved = await repository.save('journalEntry', journal());
     vi.spyOn(database.records, 'get').mockRejectedValueOnce(

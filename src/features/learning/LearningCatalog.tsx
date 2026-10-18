@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, CheckCircle2, Clock, Search } from 'lucide-react';
 import { getModules, getLessons, learningStages } from '../../content';
 import { useLearningService } from '../../hooks/useFeatureServices';
-import { useServiceQuery } from '../../hooks/useServiceQuery';
+import { useServiceQueryState } from '../../hooks/useServiceQuery';
 import type { CourseProgress as Progress } from '../../types';
 import { Card, PageHeading, Tag } from '../../shared/ui';
 import { useState } from 'react';
@@ -13,7 +13,10 @@ export function LearningCatalog() {
   const [params] = useSearchParams();
   const [filter, setFilter] = useState(params.get('module') ?? 'all');
   const [search, setSearch] = useState('');
-  const progress = useServiceQuery(() => learningService.listProgress(), learningService);
+  const { data: progress, loading: progressLoading } = useServiceQueryState(
+    () => learningService.listProgress(),
+    learningService,
+  );
   return (
     <>
       <PageHeading
@@ -55,6 +58,11 @@ export function LearningCatalog() {
           />
         </label>
       </div>
+      {progressLoading && (
+        <p className="muted" role="status">
+          正在读取学习进度…
+        </p>
+      )}
       <div className="academy-grid">
         {modules
           .filter(
@@ -93,7 +101,13 @@ export function LearningCatalog() {
                               <strong>{l.title}</strong>
                               <small>
                                 <Clock size={11} /> {l.minutes} 分钟 ·{' '}
-                                {p?.completed ? '已完成' : p ? '继续学习' : '入门课程'}
+                                {progressLoading
+                                  ? '正在读取学习进度…'
+                                  : p?.completed
+                                    ? '已完成'
+                                    : p
+                                      ? '继续学习'
+                                      : '入门课程'}
                               </small>
                             </div>
                             <ArrowRight size={15} />

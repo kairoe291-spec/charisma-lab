@@ -5,7 +5,7 @@ import { CustomTaskForm } from './CustomTaskForm';
 import { availableTrainingDurations } from './trainingService';
 import type { Training } from '../../types';
 import { useTrainingService } from '../../hooks/useFeatureServices';
-import { useServiceQuery } from '../../hooks/useServiceQuery';
+import { useServiceQuery, useServiceQueryState } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
 import { Card, Dialog, Empty, PageHeading, SectionTitle, Tag } from '../../shared/ui';
 import { today } from '../../utils/files';
@@ -20,7 +20,10 @@ export function TrainingWorkspace() {
   const [difficulty, setDifficulty] = useState('入门');
   const [saving, setSaving] = useState(false);
   const [historyDate, setHistoryDate] = useState('');
-  const records = useServiceQuery(() => trainingService.listRecords(), trainingService);
+  const { data: records, loading: recordsLoading } = useServiceQueryState(
+    () => trainingService.listRecords(),
+    trainingService,
+  );
   const tasks = useServiceQuery(() => trainingService.listTasks(), trainingService);
   const { perform } = useFeedback();
   const allTasks = trainingService.getTasks(tasks);
@@ -100,7 +103,11 @@ export function TrainingWorkspace() {
           全部日期
         </button>
       </label>
-      {records.length ? (
+      {recordsLoading ? (
+        <p className="muted" role="status">
+          正在读取训练记录…
+        </p>
+      ) : records.length ? (
         <div className="history-list">
           {records
             .filter((r) => !historyDate || (r.payload as TrainingRecord).date === historyDate)

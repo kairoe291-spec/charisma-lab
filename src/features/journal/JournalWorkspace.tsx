@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { NotebookPen, Plus, Search } from 'lucide-react';
 import { useJournalService } from '../../hooks/useFeatureServices';
-import { useServiceQuery } from '../../hooks/useServiceQuery';
+import { useServiceQueryState } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
 import type { JournalEntry as Journal, BusinessRecord } from '../../types';
 import { PageHeading, Card, Empty } from '../../shared/ui';
@@ -10,7 +10,10 @@ import { JournalEditor } from './JournalEditor';
 
 export function JournalWorkspace() {
   const journalService = useJournalService();
-  const records = useServiceQuery(() => journalService.list(), journalService);
+  const { data: records, loading } = useServiceQueryState(
+    () => journalService.list(),
+    journalService,
+  );
   const [params, setParams] = useSearchParams();
   const id = params.get('entry');
   const selected = records.find((r) => r.id === id);
@@ -86,7 +89,13 @@ export function JournalWorkspace() {
                 </button>
               );
             })}
-            {!visible.length && <p className="small muted">还没有匹配的记录。</p>}
+            {loading ? (
+              <p className="small muted" role="status">
+                正在读取日志…
+              </p>
+            ) : !visible.length ? (
+              <p className="small muted">还没有匹配的记录。</p>
+            ) : null}
           </div>
         </Card>
         {selected ? (
@@ -95,6 +104,10 @@ export function JournalWorkspace() {
             record={selected as BusinessRecord<'journalEntry'>}
             onDeleted={() => setParams({})}
           />
+        ) : loading ? (
+          <Card className="journal-placeholder">
+            <p role="status">正在读取日志…</p>
+          </Card>
         ) : (
           <Card className="journal-placeholder">
             <Empty

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { HardDrive, ShieldCheck } from 'lucide-react';
-import { useRecords } from '../../hooks/useRecords';
+import { useRecordsState } from '../../hooks/useRecords';
 import { useFeedback } from '../../shared/feedback';
 import { Card, SectionTitle, Tag } from '../../shared/ui';
 
 export function StorageStatusPanel({ isAccount }: { isAccount: boolean }) {
-  const records = useRecords();
+  const { data: records, loading } = useRecordsState();
   const { notify } = useFeedback();
   const [persistent, setPersistent] = useState('尚未申请');
   const [usage, setUsage] = useState('');
@@ -46,7 +46,8 @@ export function StorageStatusPanel({ isAccount }: { isAccount: boolean }) {
           <strong>此设备 · 浏览器 IndexedDB</strong>
           <p>{location.origin}</p>
           <Tag color="green">
-            {isAccount ? '当前账号空间' : '本地游客空间'} · {records.length} 条可见记录
+            {isAccount ? '当前账号空间' : '本地游客空间'} ·{' '}
+            {loading ? '正在读取记录…' : `${records.length} 条可见记录`}
           </Tag>
         </div>
       </div>

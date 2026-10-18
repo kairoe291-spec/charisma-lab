@@ -31,6 +31,7 @@ import { today, shortDate } from '../../utils/files';
 export function GrowthDashboard({ profile, percent }: { profile?: Profile; percent: number }) {
   const [radarMode, setRadarMode] = useState<'self' | 'knowledge' | 'practice'>('self');
   const {
+    loading,
     complete,
     records,
     todayTasks,
@@ -44,6 +45,12 @@ export function GrowthDashboard({ profile, percent }: { profile?: Profile; perce
     journals,
     assessments,
   } = useDashboard(profile, radarMode);
+  if (loading)
+    return (
+      <p className="muted" role="status">
+        正在读取成长记录…
+      </p>
+    );
   return (
     <>
       <div className="page-heading">

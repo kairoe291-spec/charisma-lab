@@ -25,7 +25,7 @@ import { useServiceQuery } from '../hooks/useServiceQuery';
 import { useCloud } from '../cloud/context';
 import { useSync } from './SyncProvider';
 import { GuestMigration } from '../components/GuestMigration';
-import { useRecords } from '../hooks/useRecords';
+import { useRecords, useRecordsState } from '../hooks/useRecords';
 import { modules, lessons, scenarios } from '../content';
 import { Onboarding } from './Onboarding';
 import type { Profile, Progress, Journal } from './types';
@@ -61,7 +61,7 @@ export default function App() {
   const profiles = useServiceQuery(() => profileService.listProfiles(), profileService);
   const profile = profiles[0]?.payload as Profile | undefined;
   const progress = useRecords('courseProgress');
-  const journals = useRecords('journalEntry');
+  const { data: journals, loading: journalsLoading } = useRecordsState('journalEntry');
   const { notify } = useFeedback();
   const navigate = useNavigate();
   const [saveError, setSaveError] = useState(false);
@@ -225,6 +225,7 @@ export default function App() {
             />
             {search && (
               <div className="search-results">
+                {journalsLoading && <p role="status">正在读取日志…</p>}
                 {results.length ? (
                   results.map((r, i) => (
                     <Link key={i} to={r.to} onClick={() => setSearch('')}>
@@ -232,9 +233,9 @@ export default function App() {
                       <small>{r.meta}</small>
                     </Link>
                   ))
-                ) : (
+                ) : !journalsLoading ? (
                   <p>没有找到匹配内容</p>
-                )}
+                ) : null}
               </div>
             )}
           </div>

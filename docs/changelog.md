@@ -99,12 +99,24 @@ Major.Minor.Patch
 
 > 当前开发中的内容
 
+## v0.1.1 / Sprint 6（发布收口中，尚未打 Tag）
+
+- 统一 npm 包版本 `0.1.1`、新备份 `appVersion: v0.1.1`；JSON Schema v1、IndexedDB 名称和 Dexie Schema v1 保持原样，旧版应用标识的备份继续可导入。
+- 区分响应式查询的“尚未读取”与“已读取且为空”，避免日志、训练及其他记录页面误报空状态；课程笔记读取完成前不提供编辑。
+- 更新 README、路线图、版本及数据库文档，区分已有代码、本地测试与尚未验收的真实托管 Supabase 环境。
+- Sprint 6 当时重新执行 TypeScript、ESLint、`npm test`（14 个测试文件、139/139 项）和生产构建均通过；`npm run test:e2e` 为本地 Chromium 12/12 通过。Prettier 代码文件通过，历史 Markdown 格式仍待统一。构建仍有主包体积及 Zod/Rollup 注释警告；尚未创建提交或发布标签。
+- Sprint 6.1 此前执行 `npm test`（16 个测试文件、144/144 项）与 `npm run test:e2e`（本地 Chromium 12/12）均通过；此前的 `typecheck`、`lint` 和 `build` 也均通过。以上均为各阶段此前的实际执行记录，本次仅修正文档，未重新运行测试；本地 E2E 不代表真实托管 Supabase 生产验收。
+
+## v0.1.1 / Sprint 5A（2026-10-18，本地提交 `900e532`）
+
+- 拆分 Settings 数据设置面板，修复 CSV 公式注入防护中的真实负数兼容性；验收清单保留当时执行的测试与 Git 状态。
+
 ## Architecture — v0.1.1 / Sprint 1（2026-10-16，未发布）
 
 - 将 Dashboard、学习、训练、日志、测评及个人设置的已有实现归入六个 Feature；八个页面入口只负责组合。
 - 将通用 UI、反馈、跨功能保存协调器与内容类型归位，保留兼容导出；增加 Feature/Page/Shared 导入边界检查。
 - 数据库、Repository、同步及认证实现保持原样；没有 Schema 升级、依赖安装、发布或新业务功能。
-- 已有 Lint、备份恢复单元测试和离线用例文案断言失败仍待处理，不标记整个 v0.1.1 完成。详情及逐步验证见 [Sprint 1 记录](sprints/v0.1.1-sprint-1.md)。
+- 当时的 Lint、备份恢复单元测试和离线用例文案断言仍待处理，因此 Sprint 1 当时未标记整个 v0.1.1 完成；后续已修复，本轮全量测试结果见上文。详情及当时验证见 [Sprint 1 记录](sprints/v0.1.1-sprint-1.md)。
 
 ---
 

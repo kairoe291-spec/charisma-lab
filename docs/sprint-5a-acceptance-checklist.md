@@ -66,3 +66,5 @@ Sprint 5A 原验收曾执行：`npm run typecheck`、`npm run lint`、`npm run t
 未完成：没有配置真实 Supabase 项目，云端生产联调不属于 Sprint 5A。已知非致命构建警告：主 JavaScript 文件 1,384.65 KB（Gzip 后 422.18 KB）超过 500 KB 阈值，且 `node_modules/zod` 有 Rollup 注释相关警告。安全快照保存在同一浏览器，不能替代独立 JSON 备份。故障注入覆盖当前页面的 IndexedDB `records.put` 失败与三个危险操作的拦截；其他存储故障类型及账号空间未在本轮故障注入 E2E 中覆盖。
 
 最终 Git 状态（2026-10-18 暂存复核）：分支为 `refactor/v0.1.1`；Sprint 5A 的 Settings 页面与 Feature 文件、`src/utils/files.ts`、E2E 测试及本验收清单均已暂存。当前共暂存 13 个文件；`git diff --cached --check` 检查通过。尚未执行 `git commit` 或 `git push`；`src/data`、`src/services/saveCoordinator.ts`、数据库、同步及认证相关文件未改动。
+
+后续状态说明：上段是 Sprint 5A 当时的验收快照，并非当前 Git 状态。随后 Sprint 5A 已形成本地提交 `900e532`；Sprint 6 的发布标识、读取状态与文档改动另见当轮 Git 差异和验收结果，不计入本清单原有 135/135、12/12 的历史测试数字。

@@ -1,5 +1,5 @@
 import { modules, lessons } from '../../content';
-import { useRecords } from '../../hooks/useRecords';
+import { useRecordsState } from '../../hooks/useRecords';
 import type {
   UserProfile as Profile,
   CourseProgress as Progress,
@@ -12,7 +12,7 @@ export function useDashboard(
   profile: Profile | undefined,
   radarMode: 'self' | 'knowledge' | 'practice',
 ) {
-  const allProgress = useRecords('courseProgress');
+  const { data: allProgress, loading: progressLoading } = useRecordsState('courseProgress');
   // Backup merges may preserve older copies. Count each active course once.
   const progress = allProgress.filter(
     (record, index) =>
@@ -22,10 +22,10 @@ export function useDashboard(
           (candidate.payload as Progress).lessonId === (record.payload as Progress).lessonId,
       ) === index,
   );
-  const training = useRecords('trainingRecord');
-  const journals = useRecords('journalEntry');
-  const evaluations = useRecords('selfEvaluation');
-  const assessments = useRecords('assessmentResult');
+  const { data: training, loading: trainingLoading } = useRecordsState('trainingRecord');
+  const { data: journals, loading: journalsLoading } = useRecordsState('journalEntry');
+  const { data: evaluations, loading: evaluationsLoading } = useRecordsState('selfEvaluation');
+  const { data: assessments, loading: assessmentsLoading } = useRecordsState('assessmentResult');
   const complete = progress.filter((r) => (r.payload as Progress).completed).length;
   const records = training.map((r) => r.payload as TrainingRecord).filter((r) => r.completed);
   const todayTasks = records.filter((r) => r.date === today());
@@ -80,6 +80,12 @@ export function useDashboard(
     ) ?? lessons[0];
   const focus = profile?.focus ?? ['M04', 'M06', 'M08'];
   return {
+    loading:
+      progressLoading ||
+      trainingLoading ||
+      journalsLoading ||
+      evaluationsLoading ||
+      assessmentsLoading,
     complete,
     records,
     todayTasks,

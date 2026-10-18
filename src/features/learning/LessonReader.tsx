@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Bookmark, CheckCircle2, Clock } from 'lucide-react';
 import { getLesson, getModule, getScenarios, learningStages } from '../../content';
 import { useLearningService } from '../../hooks/useFeatureServices';
-import { useServiceQuery } from '../../hooks/useServiceQuery';
+import { useServiceQueryState } from '../../hooks/useServiceQuery';
 import { useSaveQueue } from '../../hooks/useSaveQueue';
 import { useFeedback } from '../../shared/feedback';
 import type { CourseProgress as Progress, LessonNote as Note } from '../../types';
@@ -25,8 +25,14 @@ function LessonContent({ lessonId }: { lessonId: string }) {
   const learningService = useLearningService();
   const lesson = getLesson(lessonId)!;
   const module = getModule(lesson.moduleId);
-  const progress = useServiceQuery(() => learningService.listProgress(), learningService);
-  const notes = useServiceQuery(() => learningService.listNotes(), learningService);
+  const { data: progress, loading: progressLoading } = useServiceQueryState(
+    () => learningService.listProgress(),
+    learningService,
+  );
+  const { data: notes, loading: notesLoading } = useServiceQueryState(
+    () => learningService.listNotes(),
+    learningService,
+  );
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const current = progress.find((p) => (p.payload as Progress).lessonId === lessonId);
   const lessonNotes = notes.filter((record) => (record.payload as Note).lessonId === lessonId);
@@ -68,6 +74,13 @@ function LessonContent({ lessonId }: { lessonId: string }) {
   async function changeStage(n: number) {
     setLocalStage(n);
     await enqueue(() => writeProgress({ stage: n }));
+  }
+  if (progressLoading || notesLoading) {
+    return (
+      <p className="muted" role="status">
+        正在读取课程进度与笔记…
+      </p>
+    );
   }
   return (
     <>

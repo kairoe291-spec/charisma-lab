@@ -3,14 +3,17 @@ import { ArrowRight, MessagesSquare, RotateCcw } from 'lucide-react';
 import { getModule, getScenarios } from '../../content';
 import type { Scenario } from '../../types';
 import { useScenarioService } from '../../hooks/useFeatureServices';
-import { useServiceQuery } from '../../hooks/useServiceQuery';
+import { useServiceQueryState } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
 import { Card, PageHeading, Tag, SectionTitle } from '../../shared/ui';
 export function ScenarioPractice() {
   const scenarios = getScenarios();
   const scenarioService = useScenarioService();
   const [active, setActive] = useState<Scenario | null>(null);
-  const history = useServiceQuery(() => scenarioService.listAttempts(), scenarioService);
+  const { data: history, loading } = useServiceQueryState(
+    () => scenarioService.listAttempts(),
+    scenarioService,
+  );
   return (
     <>
       <PageHeading
@@ -42,7 +45,11 @@ export function ScenarioPractice() {
         </div>
       )}
       <SectionTitle title="我的练习与反思" />
-      {history.length ? (
+      {loading ? (
+        <p className="muted" role="status">
+          正在读取情景练习记录…
+        </p>
+      ) : history.length ? (
         history.map((r) => {
           const p = r.payload as { scenarioId: string; path: string[]; reflection: string };
           return (

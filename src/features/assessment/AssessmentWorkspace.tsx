@@ -9,17 +9,20 @@ import {
   selfAssessmentScale,
 } from '../../content';
 import { useAssessmentService } from '../../hooks/useFeatureServices';
-import { useServiceQuery } from '../../hooks/useServiceQuery';
-import { useRecords } from '../../hooks/useRecords';
+import { useServiceQueryState } from '../../hooks/useServiceQuery';
+import { useRecordsState } from '../../hooks/useRecords';
 import { useFeedback } from '../../shared/feedback';
 import { Card, PageHeading, SectionTitle, Tag } from '../../shared/ui';
 import type { UserProfile as Profile, TrainingRecord } from '../../types';
 export function AssessmentWorkspace() {
   const assessmentService = useAssessmentService();
-  const results = useServiceQuery(() => assessmentService.listResults(), assessmentService);
-  const journals = useRecords('journalEntry');
-  const training = useRecords('trainingRecord');
-  const profiles = useRecords('profile');
+  const { data: results, loading: resultsLoading } = useServiceQueryState(
+    () => assessmentService.listResults(),
+    assessmentService,
+  );
+  const { data: journals, loading: journalsLoading } = useRecordsState('journalEntry');
+  const { data: training, loading: trainingLoading } = useRecordsState('trainingRecord');
+  const { data: profiles, loading: profilesLoading } = useRecordsState('profile');
   const profile = profiles[0]?.payload as Profile | undefined;
   const [started, setStarted] = useState(false);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -137,7 +140,11 @@ export function AssessmentWorkspace() {
         </Card>
       )}
       <div className="assessment-results">
-        {scores ? (
+        {resultsLoading ? (
+          <p className="muted" role="status">
+            正在读取自评记录…
+          </p>
+        ) : scores ? (
           <>
             <SectionTitle title="最近一次行为自评" />
             <div className="score-grid">
@@ -165,7 +172,9 @@ export function AssessmentWorkspace() {
         <div>
           <h3>从事实开始复盘</h3>
           <p>
-            最近 7 天，你记录了 {week.length} 次训练。成长档案共有 {journals.length} 篇记录。
+            {trainingLoading || journalsLoading
+              ? '正在读取本周训练与成长档案…'
+              : `最近 7 天，你记录了 ${week.length} 次训练。成长档案共有 ${journals.length} 篇记录。`}
           </p>
           <p className="muted">回想一个具体行动：做了什么？有什么变化？下周保留哪一个小习惯？</p>
         </div>
@@ -184,7 +193,8 @@ export function AssessmentWorkspace() {
         ))}
       </div>
       <p className="small muted">
-        建议路线可以跳过或调整。你的当前目标：{profile?.goal ?? '尚未设置'}。30 / 90
+        建议路线可以跳过或调整。你的当前目标：
+        {profilesLoading ? '正在读取…' : (profile?.goal ?? '尚未设置')}。30 / 90
         天专用评估与变化趋势将在 P3 扩展。
       </p>
       <SectionTitle title="自评历史" />

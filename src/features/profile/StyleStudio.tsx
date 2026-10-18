@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { PageHeading, Card, SectionTitle, Dialog, Tag } from '../../shared/ui';
 import { useProfileService } from '../../hooks/useFeatureServices';
-import { useServiceQuery } from '../../hooks/useServiceQuery';
+import { useServiceQueryState } from '../../hooks/useServiceQuery';
 import { useFeedback } from '../../shared/feedback';
 import type { BusinessRecord, RecordPayloads } from '../../types';
 
@@ -22,11 +22,11 @@ const goalPriorities = ['高', '中', '低'];
 
 export function StyleStudio() {
   const profileService = useProfileService();
-  const interestRecords: BusinessRecord[] = useServiceQuery(
+  const { data: interestRecords, loading: interestsLoading } = useServiceQueryState(
     () => profileService.listInterests(),
     profileService,
   );
-  const goalRecords: BusinessRecord[] = useServiceQuery(
+  const { data: goalRecords, loading: goalsLoading } = useServiceQueryState(
     () => profileService.listGoals(),
     profileService,
   );
@@ -112,7 +112,12 @@ export function StyleStudio() {
                 </div>
               </div>
             ))}
-            {!interests.length && (
+            {interestsLoading && (
+              <p className="muted" role="status">
+                正在读取兴趣记录…
+              </p>
+            )}
+            {!interestsLoading && !interests.length && (
               <div className="empty">
                 <Leaf size={28} />
                 <h3>给好奇心留个位置</h3>
@@ -176,7 +181,12 @@ export function StyleStudio() {
                 </div>
               </div>
             ))}
-            {!goals.length && (
+            {goalsLoading && (
+              <p className="muted" role="status">
+                正在读取成长目标…
+              </p>
+            )}
+            {!goalsLoading && !goals.length && (
               <div className="empty">
                 <Target size={28} />
                 <h3>一个小目标就够了</h3>

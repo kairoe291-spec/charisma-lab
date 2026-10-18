@@ -4,8 +4,27 @@
 > 个人魅力成长实验室数据架构设计
 
 版本：v0.1  
-状态：Database Blueprint  
+状态：当前实现说明 + 后续设计蓝图
+
 对应版本：v0.1 → v1.0
+
+---
+
+## v0.1.1 当前本地实现（以代码为准）
+
+应用 IndexedDB 名称为 `charisma-lab-v2`（历史磁盘身份，不能因发布号变化而改名）；Dexie Schema 版本为 `1`（`src/data/local/schema.ts` 与 `src/data/local/migrations/index.ts`）；JSON 备份 `schemaVersion` 也为 `1`（`src/domain/validation.ts`），但它是独立的**备份格式版本**。三者与 npm 版本 `0.1.1`、备份 `appVersion: "v0.1.1"` 不是同一概念，不能互相替换。
+
+| 实际 Store | 主键与索引（Dexie v1） | 数据类型与用途 |
+| --- | --- | --- |
+| `records` | `[ownerScope+id]`, `ownerScope`, `[ownerScope+kind]`, `[ownerScope+updatedAt]` | `BusinessRecord`：私有业务记录 |
+| `outbox` | `mutationId`, `ownerScope`, `[ownerScope+entityId]`, `[ownerScope+status]`, `nextRetryAt` | `OutboxMutation`：待同步操作 |
+| `syncMetadata` | `[ownerScope+key]`, `ownerScope` | `SyncMetadata`：作用域内同步状态及导入凭据 |
+| `conflicts` | `id`, `ownerScope`, `[ownerScope+entityId]` | `ConflictRecord`：待处理的本地／云端版本 |
+| `safetyBackups` | `id`, `ownerScope`, `[ownerScope+createdAt]` | `SafetyBackup`：危险操作前的本机快照 |
+
+`records` 的通用字段实际为 `id: string`、`ownerScope: string`、`kind: RecordKind`、`payload: RecordPayloads[kind]`、`createdAt/updatedAt: string`（ISO 时间）、`serverVersion: number`、`localRevision: number`、`syncStatus: 'local' | 'pending' | 'synced'`；可选 `deletedAt`、`serverUpdatedAt` 和 `importedCopyOf`。当前 `RecordKind` 共 12 种：`profile`、`courseProgress`、`lessonNote`、`trainingTask`、`trainingRecord`、`scenarioAttempt`、`assessmentResult`、`selfEvaluation`、`journalEntry`、`growthGoal`、`userInterest`、`appSettings`。各 `payload` 的确切字段和 TypeScript 类型见 `src/domain/types.ts`，运行时校验见 `src/domain/validation.ts`。
+
+当前并不存在下文概念示例中的 `user_profiles`、`growth_goals` 等独立 IndexedDB Store；这些章节是未来设计蓝图，不能用作现有数据库迁移依据。业务写入经 Repository 事务同时更新 `records` 与 `outbox`，身份按 `ownerScope` 分区。更改数据库名、Store 或 Schema 版本需要单独设计兼容迁移，本次发布未执行此类变更。
 
 ---
 

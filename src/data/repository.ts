@@ -16,7 +16,7 @@ import {
 } from '../domain/validation';
 import { CharismaDatabase, db } from './database';
 
-export const APP_VERSION = '2.0.0-p1';
+export const APP_VERSION = 'v0.1.1';
 export const GUEST_SCOPE = 'guest';
 const PRIMARY_RECORD_KINDS = new Set<RecordKind>([
   'profile',

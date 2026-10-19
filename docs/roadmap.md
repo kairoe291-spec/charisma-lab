@@ -46,7 +46,7 @@
 | ---- | ---- | ---- | ---- |
 | v0.1 | Foundation MVP | 建立个人成长工具基础框架 | 已完成 |
 | v0.1.1 | Architecture Upgrade | 优化架构，为长期迭代打基础 | 已正式发布（标签 `v0.1.1`） |
-| v0.2 | Cloud Sync Edition | 本地优先的账号、数据隔离与可靠跨设备同步 | 下一开发目标；部分代码与本地测试已有，真实托管环境待验收 |
+| v0.2 | Cloud Sync Edition | 本地优先的账号与同步相关代码及本地模拟测试已具备；真实托管 Supabase 的迁移、认证、RLS/账号隔离、双设备同步与冲突处理仍待验收。 | 规划中 |
 | v0.3 | Charisma Academy | 建立完整魅力课程体系 | 规划中 |
 | v0.4 | AI Coach Edition | 引入AI个人成长助手 | 规划中 |
 | v1.0 | Personal Growth OS | 成为完整个人成长操作系统 | 长期目标 |

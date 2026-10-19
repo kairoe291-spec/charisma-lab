@@ -95,16 +95,16 @@ Major.Minor.Patch
 
 ---
 
-# [Unreleased]
+# v0.1.1（2026-10-19，已正式发布）
 
-> 当前开发中的内容
+> 正式发布基线：标签 `v0.1.1` 指向提交 `5aeda83d25ee7b98bc4f48bdecdb119c55bd443e`；[GitHub Release](https://github.com/kairoe291-spec/charisma-lab/releases/tag/v0.1.1)。以下 Sprint 验收记录均为发布前历史，本次归档未重新运行测试。
 
-## v0.1.1 / Sprint 6（发布收口中，尚未打 Tag）
+## v0.1.1 / Sprint 6（发布前历史记录）
 
 - 统一 npm 包版本 `0.1.1`、新备份 `appVersion: v0.1.1`；JSON Schema v1、IndexedDB 名称和 Dexie Schema v1 保持原样，旧版应用标识的备份继续可导入。
 - 区分响应式查询的“尚未读取”与“已读取且为空”，避免日志、训练及其他记录页面误报空状态；课程笔记读取完成前不提供编辑。
 - 更新 README、路线图、版本及数据库文档，区分已有代码、本地测试与尚未验收的真实托管 Supabase 环境。
-- Sprint 6 当时重新执行 TypeScript、ESLint、`npm test`（14 个测试文件、139/139 项）和生产构建均通过；`npm run test:e2e` 为本地 Chromium 12/12 通过。Prettier 代码文件通过，历史 Markdown 格式仍待统一。构建仍有主包体积及 Zod/Rollup 注释警告；尚未创建提交或发布标签。
+- Sprint 6 当时重新执行 TypeScript、ESLint、`npm test`（14 个测试文件、139/139 项）和生产构建均通过；`npm run test:e2e` 为本地 Chromium 12/12 通过。Prettier 代码文件通过，历史 Markdown 格式仍待统一。构建仍有主包体积及 Zod/Rollup 注释警告；当时尚未创建提交或发布标签。
 - Sprint 6.1 此前执行 `npm test`（16 个测试文件、144/144 项）与 `npm run test:e2e`（本地 Chromium 12/12）均通过；此前的 `typecheck`、`lint` 和 `build` 也均通过。以上均为各阶段此前的实际执行记录，本次仅修正文档，未重新运行测试；本地 E2E 不代表真实托管 Supabase 生产验收。
 
 ## v0.1.1 / Sprint 5A（2026-10-18，本地提交 `900e532`）
@@ -120,9 +120,9 @@ Major.Minor.Patch
 
 ---
 
-## Planned
+## 发布前计划（历史记录）
 
-### v0.1.1 Architecture Upgrade
+### v0.1.1 Architecture Upgrade（原计划）
 
 计划：
 
@@ -313,16 +313,16 @@ docs/
 
 ---
 
-# v0.1.1 - Architecture Upgrade
+# v0.1.1 - Architecture Upgrade（发布前原始规划）
 
 计划发布日期：
 
 2026-10
 
 
-状态：
+原规划状态：
 
-Planning
+Planning（历史记录；当前版本已发布）
 
 
 目标：

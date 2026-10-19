@@ -441,7 +441,7 @@ migrations/
 
 # v0.2.0 - Cloud Sync Edition
 
-计划版本。
+下一开发目标，尚未发布。账号、同步引擎和 SQL 迁移已有代码及本地测试，但不能据此宣称真实托管 Supabase 已验收；也没有本轮新执行的测试结果。范围与验收标准见 [v0.2 版本文档](versions/v0.2.md)，独立发布门槛见 [CLOUD-ACCEPTANCE-01](cloud-acceptance-checklist.md)。以下为规划能力，不是完成记录。
 
 
 目标：
@@ -451,7 +451,7 @@ migrations/
 
 ---
 
-# Added
+# Planned / 待验收
 
 
 ## 用户系统
